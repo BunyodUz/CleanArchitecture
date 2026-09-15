@@ -18,7 +18,7 @@ If you find this project useful, please give it a star. Thanks! ⭐
 
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or later
 - [Node.js](https://nodejs.org/) (LTS) — only required if you plan to use the Angular or React frontend
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/) (or any OCI-compliant container runtime) — only required when using SQL Server or PostgreSQL. Not required when using SQLite (the default).
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/) (or any OCI-compliant container runtime) — required to run PostgreSQL locally via Aspire.
 
 ### Install the template
 
@@ -78,6 +78,7 @@ To learn more, see the [Getting started](https://cleanarchitecture.jasontaylor.d
 * [AutoMapper](https://automapper.org/)
 * [FluentValidation](https://fluentvalidation.net/)
 * [NUnit](https://nunit.org/), [Shouldly](https://docs.shouldly.org/), [Moq](https://github.com/devlooped/moq) & [Respawn](https://github.com/jbogard/Respawn)
+* [DbUp](https://dbup.readthedocs.io/) — numbered SQL script migrations (see [ADR-004](docs/decisions/ADR-004-SQL-Script-Migrations-With-DbUp.md))
 * [Scalar](https://scalar.com/)
 
 ## Versions
