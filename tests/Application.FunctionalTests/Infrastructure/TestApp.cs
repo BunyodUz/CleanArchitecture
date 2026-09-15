@@ -1,8 +1,6 @@
 using CleanArchitecture.Domain.Constants;
 using CleanArchitecture.Infrastructure.Data;
-using CleanArchitecture.Infrastructure.Identity;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +10,7 @@ public static class TestApp
 {
     private static string? _userId;
     private static List<string>? _roles;
+    private static List<string>? _permissions;
 
     public static async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request)
     {
@@ -35,48 +34,27 @@ public static class TestApp
 
     public static List<string>? GetRoles() => _roles;
 
-    public static async Task<string> RunAsDefaultUserAsync()
+    public static List<string>? GetPermissions() => _permissions;
+
+    // Any authenticated user can manage their own todos today — only admin-only actions
+    // need the Administrator role, so the default test user gets the baseline permissions.
+    public static Task<string> RunAsDefaultUserAsync() => RunAsUserAsync(
+        [],
+        [Permissions.TodoLists.Read, Permissions.TodoLists.Write, Permissions.TodoItems.Read, Permissions.TodoItems.Write]);
+
+    public static Task<string> RunAsAdministratorAsync() => RunAsUserAsync(
+        [Roles.Administrator],
+        [Permissions.TodoLists.Read, Permissions.TodoLists.Write, Permissions.TodoItems.Read, Permissions.TodoItems.Write]);
+
+    // No real identity provider is involved in functional tests — IUser is mocked directly
+    // by WebApiFactory, so "running as" a user is just picking the id/roles/permissions it returns.
+    public static Task<string> RunAsUserAsync(string[] roles, string[] permissions)
     {
-        return await RunAsUserAsync("test@local", "Testing1234!", []);
-    }
+        _userId = Guid.NewGuid().ToString();
+        _roles = [.. roles];
+        _permissions = [.. permissions];
 
-    public static async Task<string> RunAsAdministratorAsync()
-    {
-        return await RunAsUserAsync("administrator@local", "Administrator1234!", [Roles.Administrator]);
-    }
-
-    public static async Task<string> RunAsUserAsync(string userName, string password, string[] roles)
-    {
-        using var scope = FunctionalTestSetup.ScopeFactory.CreateScope();
-
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-        var user = new ApplicationUser { UserName = userName, Email = userName };
-
-        var result = await userManager.CreateAsync(user, password);
-
-        if (roles.Length > 0)
-        {
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-            foreach (var role in roles)
-            {
-                await roleManager.CreateAsync(new IdentityRole(role));
-            }
-
-            await userManager.AddToRolesAsync(user, roles);
-        }
-
-        if (result.Succeeded)
-        {
-            _userId = user.Id;
-            _roles = [..roles];
-            return _userId;
-        }
-
-        var errors = string.Join(Environment.NewLine, result.ToApplicationResult().Errors);
-
-        throw new Exception($"Unable to create {userName}.{Environment.NewLine}{errors}");
+        return Task.FromResult(_userId);
     }
 
     public static async Task ResetState()
@@ -88,6 +66,7 @@ public static class TestApp
 
         _userId = null;
         _roles = null;
+        _permissions = null;
     }
 
     public static async Task<TEntity?> FindAsync<TEntity>(params object[] keyValues)

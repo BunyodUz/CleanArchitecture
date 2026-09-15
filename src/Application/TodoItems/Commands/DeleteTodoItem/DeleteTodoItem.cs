@@ -1,7 +1,10 @@
 ﻿using CleanArchitecture.Application.Common.Interfaces;
+using CleanArchitecture.Application.Common.Security;
+using CleanArchitecture.Domain.Constants;
 
 namespace CleanArchitecture.Application.TodoItems.Commands.DeleteTodoItem;
 
+[Authorize(Permissions = Permissions.TodoItems.Write)]
 public record DeleteTodoItemCommand(int Id) : IRequest;
 
 public class DeleteTodoItemCommandHandler : IRequestHandler<DeleteTodoItemCommand>

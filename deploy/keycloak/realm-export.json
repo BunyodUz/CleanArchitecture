@@ -1,0 +1,71 @@
+{
+  "realm": "cleanarchitecture",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "roles": {
+    "realm": [
+      { "name": "Administrator", "description": "Whole-app administrator" }
+    ],
+    "client": {
+      "cleanarchitecture-web": [
+        { "name": "todolists.read", "description": "Read todo lists" },
+        { "name": "todolists.write", "description": "Create/update/delete todo lists" },
+        { "name": "todoitems.read", "description": "Read todo items" },
+        { "name": "todoitems.write", "description": "Create/update/delete todo items" }
+      ]
+    }
+  },
+  "clients": [
+    {
+      "clientId": "cleanarchitecture-web",
+      "name": "CleanArchitecture Web",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-secret-change-me",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:5000/signin-oidc",
+        "https://localhost:5001/signin-oidc"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:5000/signout-callback-oidc##https://localhost:5001/signout-callback-oidc"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "administrator",
+      "email": "administrator@localhost",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "Administrator1!", "temporary": false }
+      ],
+      "realmRoles": ["Administrator"],
+      "clientRoles": {
+        "cleanarchitecture-web": ["todolists.read", "todolists.write", "todoitems.read", "todoitems.write"]
+      }
+    },
+    {
+      "username": "member",
+      "email": "member@localhost",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "Member1!", "temporary": false }
+      ],
+      "clientRoles": {
+        "cleanarchitecture-web": ["todolists.read", "todolists.write", "todoitems.read", "todoitems.write"]
+      }
+    }
+  ]
+}

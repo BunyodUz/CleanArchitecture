@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
 import { AuthService } from 'src/api-authorization/auth.service';
 
 @Component({
@@ -11,12 +10,10 @@ import { AuthService } from 'src/api-authorization/auth.service';
 export class NavMenuComponent {
   isAuthenticated$ = this.authService.isAuthenticated$;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService) {}
 
   logout(event: Event): void {
     event.preventDefault();
-    this.authService.logout().subscribe({
-      next: () => this.router.navigate(['/login'])
-    });
+    this.authService.logout();
   }
 }

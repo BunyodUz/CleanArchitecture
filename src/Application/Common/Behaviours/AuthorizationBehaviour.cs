@@ -1,22 +1,23 @@
-﻿using System.Reflection;
+using System.Reflection;
 using CleanArchitecture.Application.Common.Exceptions;
 using CleanArchitecture.Application.Common.Interfaces;
 using CleanArchitecture.Application.Common.Security;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CleanArchitecture.Application.Common.Behaviours;
 
-public class AuthorizationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> 
+public class AuthorizationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
     private readonly IUser _user;
-    private readonly IIdentityService _identityService;
+    private readonly IAuthorizationService _authorizationService;
 
     public AuthorizationBehaviour(
         IUser user,
-        IIdentityService identityService)
+        IAuthorizationService authorizationService)
     {
         _user = user;
-        _identityService = identityService;
+        _authorizationService = authorizationService;
     }
 
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
@@ -42,7 +43,7 @@ public class AuthorizationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRe
                 {
                     foreach (var role in roles)
                     {
-                        var isInRole = _user.Roles?.Any(x => role == x)??false;
+                        var isInRole = _user.Roles?.Any(x => role == x) ?? false;
                         if (isInRole)
                         {
                             authorized = true;
@@ -58,15 +59,32 @@ public class AuthorizationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRe
                 }
             }
 
-            // Policy-based authorization
+            // Permission-based authorization
+            var authorizeAttributesWithPermissions = authorizeAttributes.Where(a => !string.IsNullOrWhiteSpace(a.Permissions));
+
+            if (authorizeAttributesWithPermissions.Any())
+            {
+                foreach (var permissions in authorizeAttributesWithPermissions.Select(a => a.Permissions.Split(',')))
+                {
+                    // Must hold every permission listed on the attribute
+                    var authorized = permissions.All(permission => _user.Permissions?.Contains(permission) ?? false);
+
+                    if (!authorized)
+                    {
+                        throw new ForbiddenAccessException();
+                    }
+                }
+            }
+
+            // Policy-based authorization — for resource/ownership checks a static claim can't express
             var authorizeAttributesWithPolicies = authorizeAttributes.Where(a => !string.IsNullOrWhiteSpace(a.Policy));
             if (authorizeAttributesWithPolicies.Any())
             {
                 foreach (var policy in authorizeAttributesWithPolicies.Select(a => a.Policy))
                 {
-                    var authorized = await _identityService.AuthorizeAsync(_user.Id, policy);
+                    var result = await _authorizationService.AuthorizeAsync(_user.Principal!, policy);
 
-                    if (!authorized)
+                    if (!result.Succeeded)
                     {
                         throw new ForbiddenAccessException();
                     }

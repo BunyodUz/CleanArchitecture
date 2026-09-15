@@ -11,9 +11,19 @@ var databaseServer = builder
         container.WithLifetime(ContainerLifetime.Persistent))
     .AddDatabase(Services.Database);
 
+// Port is pinned so it matches the static "Authentication:Keycloak:Authority" default in
+// appsettings.json (http://localhost:8080/realms/cleanarchitecture) without extra wiring.
+var keycloak = builder
+    .AddKeycloak(Services.Keycloak, port: 8080)
+    .WithDataVolume()
+    .WithRealmImport("../../deploy/keycloak")
+    .WithLifetime(ContainerLifetime.Persistent);
+
 var web = builder.AddProject<Projects.Web>(Services.WebApi)
     .WithReference(databaseServer)
     .WaitFor(databaseServer)
+    .WithReference(keycloak)
+    .WaitFor(keycloak)
     .WithExternalHttpEndpoints()
     .WithAspNetCoreEnvironment()
     .WithUrlForEndpoint("http", url =>
