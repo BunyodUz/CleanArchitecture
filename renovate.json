@@ -39,13 +39,6 @@
       "groupName": ".NET dependencies"
     },
     {
-      "description": "Group Angular updates",
-      "groupName": "Angular",
-      "matchPackageNames": [
-        "/^@angular/"
-      ]
-    },
-    {
       "description": "Group React updates",
       "groupName": "React",
       "matchPackageNames": [
