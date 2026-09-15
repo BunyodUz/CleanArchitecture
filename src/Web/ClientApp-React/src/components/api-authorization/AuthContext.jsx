@@ -1,34 +1,32 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { UsersClient, LoginRequest, RegisterRequest } from '../../web-api-client';
 
 const AuthContext = createContext(null);
 
-const client = new UsersClient();
+const ANONYMOUS = { isAuthenticated: false, userName: null, roles: [], permissions: [] };
 
 export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(ANONYMOUS);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    client.infoGET()
-      .then(() => setIsAuthenticated(true))
-      .catch(() => setIsAuthenticated(false))
+    fetch('/account/user', { credentials: 'include' })
+      .then(response => response.ok ? response.json() : ANONYMOUS)
+      .then(setUser)
+      .catch(() => setUser(ANONYMOUS))
       .finally(() => setIsLoading(false));
   }, []);
 
-  const login = (email, password) =>
-    client.login(true, undefined, new LoginRequest({ email, password }))
-      .then(() => setIsAuthenticated(true));
+  // Keycloak's hosted pages are the login/registration UI — these are redirects, not API calls.
+  const login = (returnUrl = '/') => {
+    window.location.href = `/account/login?returnUrl=${encodeURIComponent(returnUrl)}`;
+  };
 
-  const register = (email, password) =>
-    client.register(new RegisterRequest({ email, password }));
-
-  const logout = () =>
-    client.logout({})
-      .then(() => setIsAuthenticated(false));
+  const logout = () => {
+    window.location.href = `/account/logout?returnUrl=${encodeURIComponent('/')}`;
+  };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ ...user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
