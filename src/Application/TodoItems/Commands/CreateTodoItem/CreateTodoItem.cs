@@ -1,8 +1,11 @@
 ﻿using CleanArchitecture.Application.Common.Interfaces;
+using CleanArchitecture.Application.Common.Security;
+using CleanArchitecture.Domain.Constants;
 using CleanArchitecture.Domain.Entities;
 
 namespace CleanArchitecture.Application.TodoItems.Commands.CreateTodoItem;
 
+[Authorize(Permissions = Permissions.TodoItems.Write)]
 public record CreateTodoItemCommand : IRequest<int>
 {
     public int ListId { get; init; }

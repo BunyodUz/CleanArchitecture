@@ -1,39 +1,44 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators';
-import { LoginRequest, RegisterRequest, UsersClient } from '../app/web-api-client';
+import { catchError, map, tap } from 'rxjs/operators';
+
+export interface CurrentUser {
+  isAuthenticated: boolean;
+  userName?: string;
+  roles: string[];
+  permissions: string[];
+}
+
+const ANONYMOUS: CurrentUser = { isAuthenticated: false, roles: [], permissions: [] };
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private _isAuthenticated = new BehaviorSubject<boolean>(false);
-  isAuthenticated$ = this._isAuthenticated.asObservable();
+  private _currentUser = new BehaviorSubject<CurrentUser>(ANONYMOUS);
+  currentUser$ = this._currentUser.asObservable();
+  isAuthenticated$ = this.currentUser$.pipe(map(user => user.isAuthenticated));
 
-  constructor(private usersClient: UsersClient) {}
+  constructor(private http: HttpClient) {}
 
+  // Keycloak's hosted login page is the login form — this just navigates there.
   initialize(): Observable<boolean> {
-    return this.usersClient.infoGET().pipe(
-      map(() => true),
-      catchError(() => of(false)),
-      tap(isAuth => this._isAuthenticated.next(isAuth))
+    return this.http.get<CurrentUser>('/account/user').pipe(
+      tap(user => this._currentUser.next(user)),
+      map(user => user.isAuthenticated),
+      catchError(() => {
+        this._currentUser.next(ANONYMOUS);
+        return of(false);
+      })
     );
   }
 
-  login(email: string, password: string): Observable<void> {
-    return this.usersClient.login(true, undefined, new LoginRequest({ email, password })).pipe(
-      tap(() => this._isAuthenticated.next(true)),
-      map(() => void 0)
-    );
+  login(returnUrl: string): void {
+    window.location.href = `/account/login?returnUrl=${encodeURIComponent(returnUrl)}`;
   }
 
-  register(email: string, password: string): Observable<void> {
-    return this.usersClient.register(new RegisterRequest({ email, password }));
-  }
-
-  logout(): Observable<void> {
-    return this.usersClient.logout({}).pipe(
-      tap(() => this._isAuthenticated.next(false))
-    );
+  logout(): void {
+    window.location.href = `/account/logout?returnUrl=${encodeURIComponent('/')}`;
   }
 }

@@ -9,4 +9,6 @@ An ADR captures a significant architectural decision: the context that led to it
 | [ADR-001](ADR-001-Use-EFCore-In-Application-Layer.md) | Use EF Core in the Application Layer | 2024-02-29 | Accepted |
 | [ADR-002](ADR-002-Aspire-For-Orchestration-And-Testing.md) | Aspire for Orchestration and Testing | 2026-03-12 | Accepted |
 | [ADR-003](ADR-003-MediatR-Contracts-In-Domain.md) | MediatR.Contracts Reference in Domain | 2026-03-16 | Accepted |
+| [ADR-004](ADR-004-SQL-Script-Migrations-With-DbUp.md) | Numbered SQL Script Migrations with DbUp | 2026-09-15 | Accepted |
+| [ADR-005](ADR-005-Keycloak-Authentication-And-Permission-Based-Authorization.md) | Keycloak Authentication and Permission-Based Authorization | 2026-09-15 | Accepted |
 

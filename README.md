@@ -64,7 +64,14 @@ dotnet new ca-sln -cf none -db sqlite -o YourProjectName
 dotnet run --project .\src\AppHost
 ```
 
-The Aspire dashboard will open automatically, showing the application URLs and logs.
+The Aspire dashboard will open automatically, showing the application URLs and logs. This also starts a local Keycloak instance (see [ADR-005](docs/decisions/ADR-005-Keycloak-Authentication-And-Permission-Based-Authorization.md)) with a realm imported from `deploy/keycloak/realm-export.json`. Sign in with the seeded dev users:
+
+| Username | Password | Notes |
+|---|---|---|
+| `administrator@localhost` | `Administrator1!` | Has the `Administrator` role and all todo permissions |
+| `member@localhost` | `Member1!` | Has the todo permissions only |
+
+These are local-dev-only accounts defined in the realm export — change or remove them for anything beyond local development.
 
 To learn more, see the [Getting started](https://cleanarchitecture.jasontaylor.dev/docs/getting-started/) guide and [Architecture](https://cleanarchitecture.jasontaylor.dev/docs/architecture/) overview.
 
@@ -72,6 +79,7 @@ To learn more, see the [Getting started](https://cleanarchitecture.jasontaylor.d
 
 * [ASP.NET Core 10](https://docs.microsoft.com/en-us/aspnet/core/introduction-to-aspnet-core)
 * [Aspire](https://aspire.dev)
+* [Keycloak](https://www.keycloak.org/) — authentication via the BFF pattern, permission-based authorization (see [ADR-005](docs/decisions/ADR-005-Keycloak-Authentication-And-Permission-Based-Authorization.md))
 * [Entity Framework Core 10](https://docs.microsoft.com/en-us/ef/core/)
 * [Angular 21](https://angular.dev/) or [React 19](https://react.dev/)
 * [MediatR](https://github.com/jbogard/MediatR)

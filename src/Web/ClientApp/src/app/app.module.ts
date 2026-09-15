@@ -15,7 +15,6 @@ import { ThemeToggleComponent } from './theme-toggle/theme-toggle.component';
 import { API_BASE_URL } from './web-api-client';
 import { AuthorizeInterceptor } from 'src/api-authorization/authorize.interceptor';
 import { LoginComponent } from 'src/api-authorization/login/login.component';
-import { RegisterComponent } from 'src/api-authorization/register/register.component';
 import { AuthGuard } from 'src/api-authorization/auth.guard';
 import { AuthService } from 'src/api-authorization/auth.service';
 
@@ -33,8 +32,7 @@ export function getApiBaseUrl(): string {
         WeatherComponent,
         TasksComponent,
         ThemeToggleComponent,
-        LoginComponent,
-        RegisterComponent
+        LoginComponent
     ],
     bootstrap: [AppComponent],
     imports: [
@@ -46,8 +44,7 @@ export function getApiBaseUrl(): string {
             { path: 'counter', component: CounterComponent },
             { path: 'weather', component: WeatherComponent, canActivate: [AuthGuard] },
             { path: 'todo', component: TasksComponent, canActivate: [AuthGuard] },
-            { path: 'login', component: LoginComponent },
-            { path: 'register', component: RegisterComponent }
+            { path: 'login', component: LoginComponent }
         ])
     ],
     providers: [

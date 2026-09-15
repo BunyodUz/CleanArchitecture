@@ -25,4 +25,14 @@ public static class Services
     /// This is the name of the database that will be created and used by the application.
     /// </summary>
     public const string Database = "CleanArchitectureDb";
+
+    /// <summary>
+    /// The name of the Keycloak service, used as the identity provider.
+    /// </summary>
+    public const string Keycloak = "keycloak";
+
+    /// <summary>
+    /// The name of the Keycloak realm used by this application.
+    /// </summary>
+    public const string KeycloakRealm = "cleanarchitecture";
 }

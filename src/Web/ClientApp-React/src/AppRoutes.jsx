@@ -3,7 +3,6 @@ import { Weather } from "./components/Weather";
 import { Tasks } from "./components/Todo";
 import { Home } from "./components/Home";
 import { LoginPage } from "./components/api-authorization/LoginPage";
-import { RegisterPage } from "./components/api-authorization/RegisterPage";
 import { ProtectedRoute } from "./components/api-authorization/ProtectedRoute";
 
 const AppRoutes = [
@@ -26,10 +25,6 @@ const AppRoutes = [
   {
     path: '/login',
     element: <LoginPage />
-  },
-  {
-    path: '/register',
-    element: <RegisterPage />
   }
 ];
 
