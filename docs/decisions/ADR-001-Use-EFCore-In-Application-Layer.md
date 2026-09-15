@@ -32,7 +32,7 @@ The result is an extra layer of indirection that increases complexity and reduce
 
 ### Testing against a real database is preferred
 
-Functional tests run against a real PostgreSQL instance (started via `docker compose`) and use Respawn to reset state between tests. Testing against the actual database provider catches issues that in-memory fakes and mocked repositories cannot: provider-specific query behaviour, index violations, transaction semantics, and constraint enforcement. This is the [approach recommended by Microsoft](https://learn.microsoft.com/en-us/ef/core/testing/choosing-a-testing-strategy).
+Functional tests use Aspire to spin up a real database and Respawn to reset state between tests. Testing against the actual database provider catches issues that in-memory fakes and mocked repositories cannot: provider-specific query behaviour, index violations, transaction semantics, and constraint enforcement. This is the [approach recommended by Microsoft](https://learn.microsoft.com/en-us/ef/core/testing/choosing-a-testing-strategy).
 
 Unit tests for pure domain logic and Application-layer validation do not require database access at all.
 

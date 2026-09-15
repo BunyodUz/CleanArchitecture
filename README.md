@@ -6,7 +6,7 @@
 [![Nuget](https://img.shields.io/nuget/dt/Clean.Architecture.Solution.Template?label=Downloads)](https://www.nuget.org/packages/Clean.Architecture.Solution.Template)
 ![Twitter Follow](https://img.shields.io/twitter/follow/jasontaylordev?label=Follow&style=social)
 
-The goal of this template is to provide a straightforward and efficient approach to enterprise application development, leveraging the power of Clean Architecture and ASP.NET Core. Using this template, you can effortlessly create a new app with Angular, React, or Web API only, powered by ASP.NET Core. Getting started is easy - simply install the **.NET template** (see below for full details).
+The goal of this template is to provide a straightforward and efficient approach to enterprise application development, leveraging the power of Clean Architecture and ASP.NET Core. Using this template, you can effortlessly create a new app with Angular, React, or Web API only, powered by ASP.NET Core and Aspire. Getting started is easy - simply install the **.NET template** (see below for full details).
 
 For full documentation, visit **[cleanarchitecture.jasontaylor.dev](https://cleanarchitecture.jasontaylor.dev)**.
 
@@ -18,7 +18,7 @@ If you find this project useful, please give it a star. Thanks! ⭐
 
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or later
 - [Node.js](https://nodejs.org/) (LTS) — only required if you plan to use the Angular or React frontend
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/) (or any OCI-compliant container runtime) with [Docker Compose](https://docs.docker.com/compose/) — required to run PostgreSQL locally.
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/) (or any OCI-compliant container runtime) — required to run PostgreSQL locally via Aspire.
 
 ### Install the template
 
@@ -60,50 +60,18 @@ dotnet new ca-sln -cf none -db sqlite -o YourProjectName
 
 ### Run the app
 
-Start the infrastructure dependencies (PostgreSQL):
-
 ```bash
-docker compose up -d
+dotnet run --project .\src\AppHost
 ```
 
-Then run the Web API:
-
-```bash
-dotnet run --project src/Web
-```
-
-If you're using the Angular or React frontend, run its dev server separately:
-
-```bash
-cd src/Web/ClientApp   # or ClientApp-React
-npm install
-npm start
-```
+The Aspire dashboard will open automatically, showing the application URLs and logs.
 
 To learn more, see the [Getting started](https://cleanarchitecture.jasontaylor.dev/docs/getting-started/) guide and [Architecture](https://cleanarchitecture.jasontaylor.dev/docs/architecture/) overview.
-
-### Running tests
-
-`Application.FunctionalTests` and `Web.AcceptanceTests` connect to PostgreSQL rather than provisioning it themselves, so start it first:
-
-```bash
-docker compose up -d
-```
-
-`Web.AcceptanceTests` also serves the frontend from the Web app's own build output, so build it once beforehand:
-
-```bash
-cd src/Web/ClientApp   # or ClientApp-React
-npm install
-npm run build
-```
-
-Then run the tests as usual, e.g. `dotnet test`.
 
 ## Technologies
 
 * [ASP.NET Core 10](https://docs.microsoft.com/en-us/aspnet/core/introduction-to-aspnet-core)
-* [Docker Compose](https://docs.docker.com/compose/) — local infrastructure (see [ADR-005](docs/decisions/ADR-005-Docker-Compose-Instead-Of-Aspire.md))
+* [Aspire](https://aspire.dev)
 * [Entity Framework Core 10](https://docs.microsoft.com/en-us/ef/core/)
 * [Angular 21](https://angular.dev/) or [React 19](https://react.dev/)
 * [MediatR](https://github.com/jbogard/MediatR)

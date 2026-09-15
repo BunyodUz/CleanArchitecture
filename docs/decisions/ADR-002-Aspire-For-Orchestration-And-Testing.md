@@ -2,7 +2,7 @@
 
 ## Status
 
-Superseded by [ADR-005](ADR-005-Docker-Compose-Instead-Of-Aspire.md)
+Accepted
 
 ## Date
 
