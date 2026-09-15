@@ -12,6 +12,8 @@ public class UpdateTodoItemDetailTests : TestBase
     [Test]
     public async Task ShouldRequireValidTodoItemId()
     {
+        await TestApp.RunAsDefaultUserAsync();
+
         var command = new UpdateTodoItemCommand { Id = 99, Title = "New Title" };
 
         await Should.ThrowAsync<NotFoundException>(() => TestApp.SendAsync(command));
