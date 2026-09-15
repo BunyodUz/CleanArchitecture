@@ -10,6 +10,8 @@ public class CreateTodoItemTests : TestBase
     [Test]
     public async Task ShouldRequireMinimumFields()
     {
+        await TestApp.RunAsDefaultUserAsync();
+
         var command = new CreateTodoItemCommand();
 
         await Should.ThrowAsync<ValidationException>(() => TestApp.SendAsync(command));

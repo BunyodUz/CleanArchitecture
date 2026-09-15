@@ -20,5 +20,5 @@ public class LoginPage(IPage page) : BasePage(page)
         => Page.Locator("a:has-text('Log out')").TextContentAsync();
 
     public Task AssertErrorVisible()
-        => Assertions.Expect(Page.GetByText("Invalid username or password", exact: false)).ToBeVisibleAsync();
+        => Assertions.Expect(Page.GetByText("Invalid username or password")).ToBeVisibleAsync();
 }

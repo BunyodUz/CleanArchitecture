@@ -9,6 +9,8 @@ public class CreateTodoListTests : TestBase
     [Test]
     public async Task ShouldRequireMinimumFields()
     {
+        await TestApp.RunAsDefaultUserAsync();
+
         var command = new CreateTodoListCommand();
         await Should.ThrowAsync<ValidationException>(() => TestApp.SendAsync(command));
     }
@@ -16,6 +18,8 @@ public class CreateTodoListTests : TestBase
     [Test]
     public async Task ShouldRequireUniqueTitle()
     {
+        await TestApp.RunAsDefaultUserAsync();
+
         await TestApp.SendAsync(new CreateTodoListCommand
         {
             Title = "Shopping"

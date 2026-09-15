@@ -10,6 +10,8 @@ public class DeleteTodoItemTests : TestBase
     [Test]
     public async Task ShouldRequireValidTodoItemId()
     {
+        await TestApp.RunAsDefaultUserAsync();
+
         var command = new DeleteTodoItemCommand(99);
 
         await Should.ThrowAsync<NotFoundException>(() => TestApp.SendAsync(command));
@@ -18,6 +20,8 @@ public class DeleteTodoItemTests : TestBase
     [Test]
     public async Task ShouldDeleteTodoItem()
     {
+        await TestApp.RunAsDefaultUserAsync();
+
         var listId = await TestApp.SendAsync(new CreateTodoListCommand
         {
             Title = "New List"

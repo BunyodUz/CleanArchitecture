@@ -1,8 +1,8 @@
 using System.Reflection;
 using CleanArchitecture.Application.Common.Exceptions;
 using CleanArchitecture.Application.Common.Interfaces;
-using CleanArchitecture.Application.Common.Security;
 using Microsoft.AspNetCore.Authorization;
+using AuthorizeAttribute = CleanArchitecture.Application.Common.Security.AuthorizeAttribute;
 
 namespace CleanArchitecture.Application.Common.Behaviours;
 

@@ -20,7 +20,13 @@ internal sealed class DatabaseResetter : IAsyncDisposable
         var connection = new NpgsqlConnection(connectionString);
 
         await connection.OpenAsync();
-        var respawner = await Respawner.CreateAsync(connection);
+        // DbUp's own journal table must survive resets, or every reset makes it forget
+        // which scripts have already run — leaving the ones it created behind it
+        // but "unrecorded", so it errors trying to re-run them on the next start.
+        var respawner = await Respawner.CreateAsync(connection, new RespawnerOptions
+        {
+            TablesToIgnore = [new Respawn.Graph.Table("schemaversions")]
+        });
         await connection.CloseAsync();
         return new DatabaseResetter(connection, respawner);
     }
