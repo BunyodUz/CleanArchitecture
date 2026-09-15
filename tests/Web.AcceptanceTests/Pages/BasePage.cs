@@ -2,7 +2,7 @@ namespace CleanArchitecture.Web.AcceptanceTests.Pages;
 
 public abstract class BasePage(IPage page)
 {
-    protected static string BaseUrl => AspireSetup.App.GetEndpoint(Services.WebFrontend).ToString().TrimEnd('/');
+    protected static string BaseUrl => AcceptanceTestSetup.Host.ServerAddress.TrimEnd('/');
 
     public abstract string PagePath { get; }
 

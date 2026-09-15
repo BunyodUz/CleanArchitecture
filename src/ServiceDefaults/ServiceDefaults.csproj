@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <IsAspireSharedProject>true</IsAspireSharedProject>
     <RootNamespace>CleanArchitecture.ServiceDefaults</RootNamespace>
     <AssemblyName>CleanArchitecture.ServiceDefaults</AssemblyName>
   </PropertyGroup>
