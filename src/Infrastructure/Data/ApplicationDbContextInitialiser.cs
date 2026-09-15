@@ -37,19 +37,22 @@ public class ApplicationDbContextInitialiser
         _roleManager = roleManager;
     }
 
-    public async Task InitialiseAsync()
+    public Task InitialiseAsync()
     {
         try
         {
-            // See https://jasontaylor.dev/ef-core-database-initialisation-strategies
-            await _context.Database.EnsureDeletedAsync();
-            await _context.Database.EnsureCreatedAsync();
+            var connectionString = _context.Database.GetConnectionString()
+                ?? throw new InvalidOperationException("No connection string is configured for the database.");
+
+            DatabaseMigrator.MigrateDatabase(connectionString);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred while initialising the database.");
             throw;
         }
+
+        return Task.CompletedTask;
     }
 
     public async Task SeedAsync()
