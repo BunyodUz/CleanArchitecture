@@ -17,7 +17,7 @@ If you find this project useful, please give it a star. Thanks! ⭐
 ### Prerequisites
 
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or later
-- [Node.js](https://nodejs.org/) (LTS) — only required if you plan to use the Angular or React frontend
+- [Node.js](https://nodejs.org/) (LTS) — required for the React frontend
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/) (or any OCI-compliant container runtime) — required to run PostgreSQL locally via Aspire.
 
 ### Install the template
@@ -81,7 +81,7 @@ To learn more, see the [Getting started](https://cleanarchitecture.jasontaylor.d
 * [Aspire](https://aspire.dev)
 * [Keycloak](https://www.keycloak.org/) — authentication via the BFF pattern, permission-based authorization (see [ADR-005](docs/decisions/ADR-005-Keycloak-Authentication-And-Permission-Based-Authorization.md))
 * [Entity Framework Core 10](https://docs.microsoft.com/en-us/ef/core/)
-* [Angular 21](https://angular.dev/) or [React 19](https://react.dev/)
+* [React 19](https://react.dev/)
 * [MediatR](https://github.com/jbogard/MediatR)
 * [AutoMapper](https://automapper.org/)
 * [FluentValidation](https://fluentvalidation.net/)

@@ -41,17 +41,11 @@
   <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
     <!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
-    <!--#if (UseAngular)-->
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build -- --configuration production" />
-    <!--#endif-->
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" Condition="'$(UseReact)' == 'True'" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" />
 
     <!-- Include the newly-built files in the publish output -->
     <ItemGroup>
-      <!--#if (UseAngular)-->
-      <DistFiles Include="$(SpaRoot)dist\browser\**;" />
-      <!--#endif-->
-      <DistFiles Include="$(SpaRoot)build\**" Condition="'$(UseReact)' == 'True'" />
+      <DistFiles Include="$(SpaRoot)build\**" />
       <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
         <RelativePath>wwwroot\%(RecursiveDir)%(FileName)%(Extension)</RelativePath>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
