@@ -25,10 +25,16 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseCors(static builder => 
+// The frontend is a statically-exported Next.js app with no dev-time proxy (unlike a
+// bundler dev server), so in development it calls the API cross-origin with the auth
+// cookie attached. AllowAnyOrigin() can't be combined with credentialed requests — browsers
+// reject that combination outright — so origins are echoed back instead via
+// SetIsOriginAllowed, which keeps "any origin" while remaining compatible with credentials.
+app.UseCors(static builder =>
     builder.AllowAnyMethod()
         .AllowAnyHeader()
-        .AllowAnyOrigin());
+        .SetIsOriginAllowed(_ => true)
+        .AllowCredentials());
 
 app.UseFileServer();
 
