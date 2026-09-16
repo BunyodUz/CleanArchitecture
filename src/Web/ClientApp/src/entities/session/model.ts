@@ -20,4 +20,6 @@ export const $currentUser = createStore<CurrentUserDto>(ANONYMOUS).on(
 
 export const $isAuthenticated = $currentUser.map((user) => user.isAuthenticated);
 export const $permissions = $currentUser.map((user) => user.permissions);
+export const $roles = $currentUser.map((user) => user.roles);
+export const $isAdministrator = $roles.map((roles) => roles.includes("Administrator"));
 export const $sessionLoading = fetchCurrentUserFx.pending;

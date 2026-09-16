@@ -39,6 +39,18 @@
       "attributes": {
         "post.logout.redirect.uris": "http://localhost:5000/signout-callback-oidc##https://localhost:5001/signout-callback-oidc"
       }
+    },
+    {
+      "clientId": "cleanarchitecture-admin-api",
+      "name": "CleanArchitecture Admin API",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-admin-api-secret-change-me",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
     }
   ],
   "users": [
@@ -65,6 +77,14 @@
       ],
       "clientRoles": {
         "cleanarchitecture-web": ["todolists.read", "todolists.write", "todoitems.read", "todoitems.write"]
+      }
+    },
+    {
+      "username": "service-account-cleanarchitecture-admin-api",
+      "enabled": true,
+      "serviceAccountClientId": "cleanarchitecture-admin-api",
+      "clientRoles": {
+        "realm-management": ["view-realm", "view-users", "query-users", "query-groups", "manage-users"]
       }
     }
   ]

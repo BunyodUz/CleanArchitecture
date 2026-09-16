@@ -3,9 +3,21 @@
 import { Anchor, Group } from "@mantine/core";
 import { useUnit } from "effector-react";
 import Link from "next/link";
-import { $isAuthenticated } from "@/entities/session";
+import { $isAdministrator, $isAuthenticated } from "@/entities/session";
 import { logout } from "@/features/auth";
 import { ThemeToggle } from "@/shared/ui/ThemeToggle";
+
+function UsersLink() {
+  const isAdministrator = useUnit($isAdministrator);
+
+  if (!isAdministrator) return null;
+
+  return (
+    <Anchor component={Link} href="/users">
+      Users
+    </Anchor>
+  );
+}
 
 function AuthLinks() {
   const isAuthenticated = useUnit($isAuthenticated);
@@ -50,6 +62,7 @@ export function NavMenu() {
         <Anchor component={Link} href="/todo">
           Tasks
         </Anchor>
+        <UsersLink />
       </Group>
       <Group gap="md" wrap="nowrap">
         <AuthLinks />

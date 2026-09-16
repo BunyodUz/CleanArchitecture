@@ -58,7 +58,7 @@ ASP.NET Core's policy/requirement/handler model is the right tool for resource-b
 **Easier:**
 - No local user/password/token storage or lifecycle to secure, migrate, or reason about — Keycloak owns all of it.
 - `AuthorizationBehaviour` checks are direct claim lookups; no service call, no database round-trip.
-- Adding a new permission is a new constant in `Permissions` plus a new client role in the Keycloak realm — no code path for user/role management to build.
+- Adding a new permission is a new constant in `Permissions` plus a new client role in the Keycloak realm. (User/role *management* did eventually get a code path after all — see ADR-006 — but assigning a brand-new permission is still a realm change, not a data change.)
 
 **Harder:**
 - A local dev environment now needs Keycloak running (via Aspire, see `src/AppHost/Program.cs`) in addition to Postgres.

@@ -73,6 +73,8 @@ The Aspire dashboard will open automatically, showing the application URLs and l
 
 These are local-dev-only accounts defined in the realm export — change or remove them for anything beyond local development.
 
+Signed in as `administrator`, a **Users** link appears in the nav — it manages Keycloak users and their realm roles directly from the app via Keycloak's Admin REST API (see [ADR-006](docs/decisions/ADR-006-Keycloak-Admin-API-User-Management.md)).
+
 To learn more, see the [Getting started](https://cleanarchitecture.jasontaylor.dev/docs/getting-started/) guide and [Architecture](https://cleanarchitecture.jasontaylor.dev/docs/architecture/) overview.
 
 ## Technologies

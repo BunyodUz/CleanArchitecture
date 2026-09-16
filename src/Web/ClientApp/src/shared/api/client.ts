@@ -2,6 +2,7 @@ import {
   AccountClient,
   TodoItemsClient,
   TodoListsClient,
+  UsersClient,
   WeatherForecastsClient,
 } from "../../web-api-client";
 import { API_BASE_URL } from "@/shared/config/env";
@@ -23,3 +24,4 @@ export const accountClient = new AccountClient(API_BASE_URL, httpClient);
 export const todoListsClient = new TodoListsClient(API_BASE_URL, httpClient);
 export const todoItemsClient = new TodoItemsClient(API_BASE_URL, httpClient);
 export const weatherForecastsClient = new WeatherForecastsClient(API_BASE_URL, httpClient);
+export const usersClient = new UsersClient(API_BASE_URL, httpClient);
