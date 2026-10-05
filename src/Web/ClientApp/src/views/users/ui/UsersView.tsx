@@ -2,11 +2,14 @@
 
 import {
   ActionIcon,
+  Alert,
   Badge,
   Button,
   Group,
   Modal,
   MultiSelect,
+  Pagination,
+  Paper,
   PasswordInput,
   Skeleton,
   Stack,
@@ -16,9 +19,10 @@ import {
   TextInput,
   Tooltip,
 } from "@mantine/core";
+import { useDebouncedValue } from "@mantine/hooks";
 import { useUnit } from "effector-react";
-import { KeyRound, Pencil, Plus, Trash2, UserX } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Info, KeyRound, Pencil, Plus, Search, SearchX, Trash2, UserX } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { $roles, fetchRolesFx } from "@/entities/role";
 import { $permissions } from "@/entities/session";
 import {
@@ -36,7 +40,9 @@ import { getFieldError } from "@/shared/lib/api-error";
 import { notifyError, notifySuccess } from "@/shared/lib/notify";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { PageHeader } from "@/shared/ui/PageHeader";
-import type { IdentityUserDto } from "@/web-api-client";
+import type { IdentityRoleDto, IdentityUserDto } from "@/web-api-client";
+
+const PAGE_SIZE = 10;
 
 type Dialog =
   | { kind: "create" }
@@ -48,17 +54,31 @@ type Dialog =
 export function UsersView() {
   const [users, roles, loading, myPermissions] = useUnit([$users, $roles, $usersLoading, $permissions]);
   const [dialog, setDialog] = useState<Dialog>(null);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch] = useDebouncedValue(search.trim(), 300);
+  const [page, setPage] = useState(1);
+  const changeSearch = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
 
   // Mirrors the API's rules (the API enforces them regardless): editing users needs users.write,
   // and assigning roles additionally needs roles.write — plus roles.read to list the options.
   const canWriteUsers = myPermissions.includes(PERMISSIONS.users.write);
   const canReadRoles = myPermissions.includes(PERMISSIONS.roles.read);
   const canAssignRoles = canWriteUsers && canReadRoles && myPermissions.includes(PERMISSIONS.roles.write);
-  const roleOptions = roles.flatMap((r) => (r.name ? [r.name] : []));
 
+  // Keycloak does the matching (username, email, first and last name); paging is client-side.
   useEffect(() => {
-    fetchUsersFx().catch((e) => notifyError("Couldn't load users", e));
-  }, []);
+    fetchUsersFx(debouncedSearch || undefined).catch((e) => notifyError("Couldn't load users", e));
+  }, [debouncedSearch]);
+
+  const pageCount = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const pageUsers = useMemo(
+    () => users.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [users, currentPage],
+  );
 
   useEffect(() => {
     if (canReadRoles) fetchRolesFx().catch(() => undefined);
@@ -81,12 +101,41 @@ export function UsersView() {
         }
       />
 
+      <Group justify="space-between" mb="md" gap="sm">
+        <TextInput
+          placeholder="Search by username, name or email"
+          aria-label="Search users"
+          leftSection={<Search size={16} />}
+          value={search}
+          onChange={(e) => changeSearch(e.currentTarget.value)}
+          w={{ base: "100%", xs: 340 }}
+        />
+        {users.length > 0 && (
+          <Text c="dimmed" fz="sm" style={{ fontVariantNumeric: "tabular-nums" }}>
+            {users.length === 1 ? "1 user" : `${users.length} users`}
+            {pageCount > 1 && ` · showing ${(currentPage - 1) * PAGE_SIZE + 1}–${(currentPage - 1) * PAGE_SIZE + pageUsers.length}`}
+          </Text>
+        )}
+      </Group>
+
       {loading && users.length === 0 ? (
         <Stack gap="xs">
           {Array.from({ length: 4 }, (_, i) => (
             <Skeleton key={i} h={40} radius="sm" />
           ))}
         </Stack>
+      ) : users.length === 0 && debouncedSearch ? (
+        <EmptyState
+          icon={<SearchX size={28} />}
+          title={`No users match "${debouncedSearch}"`}
+          action={
+            <Button variant="light" size="xs" onClick={() => changeSearch("")}>
+              Clear search
+            </Button>
+          }
+        >
+          Search matches usernames, email addresses, and first and last names.
+        </EmptyState>
       ) : users.length === 0 ? (
         <EmptyState icon={<UserX size={28} />} title="No users yet">
           Users you create here can sign in through Keycloak.
@@ -105,7 +154,7 @@ export function UsersView() {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {users.map((user) => (
+              {pageUsers.map((user) => (
                 <Table.Tr key={user.id}>
                   <Table.Td>{user.username}</Table.Td>
                   <Table.Td>{[user.firstName, user.lastName].filter(Boolean).join(" ")}</Table.Td>
@@ -161,10 +210,16 @@ export function UsersView() {
         </Table.ScrollContainer>
       )}
 
+      {pageCount > 1 && (
+        <Group justify="flex-end" mt="md">
+          <Pagination total={pageCount} value={currentPage} onChange={setPage} size="sm" />
+        </Group>
+      )}
+
       {(dialog?.kind === "create" || dialog?.kind === "edit") && (
         <UserFormModal
           user={dialog.kind === "edit" ? dialog.user : undefined}
-          roleOptions={roleOptions}
+          allRoles={roles}
           canAssignRoles={canAssignRoles}
           onClose={close}
         />
@@ -178,12 +233,12 @@ export function UsersView() {
 interface UserFormModalProps {
   /** Omitted when creating a new user. */
   user?: IdentityUserDto;
-  roleOptions: string[];
+  allRoles: IdentityRoleDto[];
   canAssignRoles: boolean;
   onClose: () => void;
 }
 
-function UserFormModal({ user, roleOptions, canAssignRoles, onClose }: UserFormModalProps) {
+function UserFormModal({ user, allRoles, canAssignRoles, onClose }: UserFormModalProps) {
   const isEdit = !!user;
   const [username, setUsername] = useState(user?.username ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
@@ -247,7 +302,23 @@ function UserFormModal({ user, roleOptions, canAssignRoles, onClose }: UserFormM
             error={errors.password}
           />
         )}
-        {canAssignRoles && <MultiSelect label="Roles" data={roleOptions} value={roles} onChange={setRoles} searchable />}
+        {canAssignRoles && (
+          <>
+            <MultiSelect
+              label="Roles"
+              data={allRoles.flatMap((r) => (r.name ? [r.name] : []))}
+              value={roles}
+              onChange={setRoles}
+              searchable
+            />
+            <EffectivePermissions roles={roles} allRoles={allRoles} />
+            {isEdit && (
+              <Alert variant="light" color="blue" icon={<Info size={16} />} p="xs">
+                Role changes take effect at the user&apos;s next sign-in.
+              </Alert>
+            )}
+          </>
+        )}
         <Group justify="flex-end">
           <Button variant="default" onClick={onClose} disabled={saving}>
             Cancel
@@ -258,6 +329,34 @@ function UserFormModal({ user, roleOptions, canAssignRoles, onClose }: UserFormM
         </Group>
       </Stack>
     </Modal>
+  );
+}
+
+/** Read-only union of the permissions the selected roles grant — what the user will be able to do. */
+function EffectivePermissions({ roles, allRoles }: { roles: string[]; allRoles: IdentityRoleDto[] }) {
+  const permissions = [
+    ...new Set(allRoles.filter((r) => r.name && roles.includes(r.name)).flatMap((r) => r.permissions ?? [])),
+  ].sort();
+
+  return (
+    <Paper withBorder radius="sm" p="sm" bg="var(--mantine-color-default-hover)">
+      <Text fz="xs" fw={600} tt="uppercase" c="dimmed" mb={6} style={{ letterSpacing: "0.04em" }}>
+        Effective permissions
+      </Text>
+      {permissions.length === 0 ? (
+        <Text fz="sm" c="dimmed">
+          No permissions — the user can sign in but can&apos;t see or change anything.
+        </Text>
+      ) : (
+        <Group gap={4}>
+          {permissions.map((permission) => (
+            <Badge key={permission} variant="light" color="gray" tt="none">
+              {permission}
+            </Badge>
+          ))}
+        </Group>
+      )}
+    </Paper>
   );
 }
 

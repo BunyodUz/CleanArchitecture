@@ -1,4 +1,4 @@
-import { createEffect, createStore } from "effector";
+import { createEffect, createStore, sample } from "effector";
 import { usersClient } from "@/shared/api/client";
 import {
   CreateUserCommand,
@@ -10,7 +10,17 @@ import {
 
 export const fetchUsersFx = createEffect((search?: string) => usersClient.getUsers(search));
 
-export const $users = createStore<IdentityUserDto[]>([]).on(fetchUsersFx.doneData, (_, users) => users);
+export const $users = createStore<IdentityUserDto[]>([]);
+
+// Search-as-you-type can have several requests in flight; only the latest one may update $users.
+const $latestSearch = createStore("").on(fetchUsersFx, (_, search) => search ?? "");
+sample({
+  clock: fetchUsersFx.done,
+  source: $latestSearch,
+  filter: (latest, { params }) => (params ?? "") === latest,
+  fn: (_, { result }) => result,
+  target: $users,
+});
 export const $usersLoading = fetchUsersFx.pending;
 
 export interface CreateUserParams {

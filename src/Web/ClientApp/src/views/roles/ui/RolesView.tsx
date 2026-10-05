@@ -2,6 +2,7 @@
 
 import {
   ActionIcon,
+  Alert,
   Badge,
   Button,
   Checkbox,
@@ -16,7 +17,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { useUnit } from "effector-react";
-import { Lock, Pencil, Plus, ShieldOff, Trash2 } from "lucide-react";
+import { Info, Lock, Pencil, Plus, ShieldOff, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   $permissionCatalog,
@@ -230,6 +231,11 @@ function RoleFormModal({ role, catalog, onClose }: { role?: IdentityRoleDto; cat
             ))}
           </Stack>
         </Checkbox.Group>
+        {isEdit && (
+          <Alert variant="light" color="blue" icon={<Info size={16} />} p="xs">
+            Permission changes reach users who hold this role at their next sign-in.
+          </Alert>
+        )}
         <Group justify="flex-end">
           <Button variant="default" onClick={onClose} disabled={saving}>
             Cancel
