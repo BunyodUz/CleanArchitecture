@@ -22,6 +22,7 @@ import {
 import { useDebouncedValue } from "@mantine/hooks";
 import { useUnit } from "effector-react";
 import { Info, KeyRound, Pencil, Plus, Search, SearchX, Trash2, UserX } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { $roles, fetchRolesFx } from "@/entities/role";
 import { $permissions } from "@/entities/session";
@@ -51,10 +52,16 @@ type Dialog =
   | { kind: "delete"; user: IdentityUserDto }
   | null;
 
+/** Reads an initial search from ?search= (the Ctrl+K search links here); keyed so a new link resets the page. */
 export function UsersView() {
+  const initialSearch = useSearchParams().get("search") ?? "";
+  return <UsersScreen key={initialSearch} initialSearch={initialSearch} />;
+}
+
+function UsersScreen({ initialSearch }: { initialSearch: string }) {
   const [users, roles, loading, myPermissions] = useUnit([$users, $roles, $usersLoading, $permissions]);
   const [dialog, setDialog] = useState<Dialog>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
   const [debouncedSearch] = useDebouncedValue(search.trim(), 300);
   const [page, setPage] = useState(1);
   const changeSearch = (value: string) => {

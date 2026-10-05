@@ -61,7 +61,7 @@ public class ProtectedRoleTests
             .Setup(s => s.GetRoleAsync("Ghost", It.IsAny<CancellationToken>()))
             .ReturnsAsync((IdentityRoleDto?)null);
 
-        var handler = new UpdateRoleCommandHandler(_identityAdminService.Object);
+        var handler = new UpdateRoleCommandHandler(_identityAdminService.Object, Mock.Of<IAuditLog>());
 
         await Should.ThrowAsync<NotFoundException>(() => handler.Handle(new UpdateRoleCommand { Name = "Ghost" }, CancellationToken.None));
         _identityAdminService.Verify(

@@ -1,3 +1,4 @@
+using CleanArchitecture.Application.AuditEntries;
 using CleanArchitecture.Application.Common.Interfaces;
 using CleanArchitecture.Application.Common.Security;
 using CleanArchitecture.Domain.Constants;
@@ -23,15 +24,21 @@ public record UpdateUserCommand : IRequest
 public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand>
 {
     private readonly IIdentityAdminService _identityAdminService;
+    private readonly IAuditLog _auditLog;
 
-    public UpdateUserCommandHandler(IIdentityAdminService identityAdminService)
+    public UpdateUserCommandHandler(IIdentityAdminService identityAdminService, IAuditLog auditLog)
     {
         _identityAdminService = identityAdminService;
+        _auditLog = auditLog;
     }
 
-    public Task Handle(UpdateUserCommand request, CancellationToken cancellationToken)
+    public async Task Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
-        return _identityAdminService.UpdateUserAsync(
+        var before = await _identityAdminService.GetUserAsync(request.Id, cancellationToken);
+
+        Guard.Against.NotFound(request.Id, before);
+
+        await _identityAdminService.UpdateUserAsync(
             request.Id,
             request.Username,
             request.Email,
@@ -39,5 +46,20 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand>
             request.LastName,
             request.Enabled,
             cancellationToken);
+
+        await _auditLog.RecordAsync(
+            AuditActions.UserUpdated,
+            AuditTargets.User,
+            request.Id,
+            request.Username,
+            AuditDetails.Changes(
+                ("username", before.Username, request.Username),
+                ("email", before.Email, request.Email),
+                ("first name", before.FirstName, request.FirstName),
+                ("last name", before.LastName, request.LastName),
+                ("status", Status(before.Enabled), Status(request.Enabled))),
+            cancellationToken);
     }
+
+    private static string Status(bool enabled) => enabled ? "enabled" : "disabled";
 }

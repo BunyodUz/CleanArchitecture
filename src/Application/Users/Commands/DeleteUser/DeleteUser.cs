@@ -10,14 +10,23 @@ public record DeleteUserCommand(string Id) : IRequest;
 public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand>
 {
     private readonly IIdentityAdminService _identityAdminService;
+    private readonly IAuditLog _auditLog;
 
-    public DeleteUserCommandHandler(IIdentityAdminService identityAdminService)
+    public DeleteUserCommandHandler(IIdentityAdminService identityAdminService, IAuditLog auditLog)
     {
         _identityAdminService = identityAdminService;
+        _auditLog = auditLog;
     }
 
-    public Task Handle(DeleteUserCommand request, CancellationToken cancellationToken)
+    public async Task Handle(DeleteUserCommand request, CancellationToken cancellationToken)
     {
-        return _identityAdminService.DeleteUserAsync(request.Id, cancellationToken);
+        // Looked up first so the audit entry can name the user once they're gone.
+        var user = await _identityAdminService.GetUserAsync(request.Id, cancellationToken);
+
+        Guard.Against.NotFound(request.Id, user);
+
+        await _identityAdminService.DeleteUserAsync(request.Id, cancellationToken);
+
+        await _auditLog.RecordAsync(AuditActions.UserDeleted, AuditTargets.User, request.Id, user.Username, null, cancellationToken);
     }
 }

@@ -11,6 +11,7 @@ import { $isAuthenticated, $permissions, $sessionLoading } from "@/entities/sess
 import { login } from "@/features/auth";
 import { $sidebarCollapsed, sidebarToggled, UiSettingsMenu } from "@/features/ui-settings";
 import { visibleNav, type ShellVariant } from "../model";
+import { SearchButton, SearchSpotlight } from "./SearchSpotlight";
 import { SideNav } from "./SideNav";
 import { UserMenu } from "./UserMenu";
 
@@ -19,7 +20,7 @@ const COLLAPSED_WIDTH = 64;
 
 /**
  * The page frame shared by the main app and the admin area: a top bar (menu toggle, brand,
- * UI settings, account) and a left sidebar that collapses to an icon rail on desktop and slides
+ * search, UI settings, account) and a left sidebar that collapses to an icon rail on desktop and slides
  * in over the page on phones. The two areas differ only in their nav items and accent.
  */
 export function AppFrame({ variant, children }: { variant: ShellVariant; children: ReactNode }) {
@@ -86,6 +87,7 @@ export function AppFrame({ variant, children }: { variant: ShellVariant; childre
           </Group>
 
           <Group gap={6} wrap="nowrap">
+            <SearchButton />
             <UiSettingsMenu />
             {isAuthenticated ? (
               <UserMenu variant={variant} />
@@ -114,6 +116,8 @@ export function AppFrame({ variant, children }: { variant: ShellVariant; childre
       </AppShell.Navbar>
 
       <AppShell.Main>{children}</AppShell.Main>
+
+      <SearchSpotlight />
     </AppShell>
   );
 }

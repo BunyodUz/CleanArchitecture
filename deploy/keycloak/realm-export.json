@@ -14,7 +14,7 @@
           "client": {
             "cleanarchitecture-web": [
               "todolists.read", "todolists.write", "todoitems.read", "todoitems.write",
-              "users.read", "users.write", "roles.read", "roles.write"
+              "users.read", "users.write", "roles.read", "roles.write", "audit.read"
             ]
           }
         }
@@ -39,7 +39,8 @@
         { "name": "users.read", "description": "View users" },
         { "name": "users.write", "description": "Create/update/delete users and reset passwords" },
         { "name": "roles.read", "description": "View roles and their permissions" },
-        { "name": "roles.write", "description": "Create/update/delete roles and assign roles to users" }
+        { "name": "roles.write", "description": "Create/update/delete roles and assign roles to users" },
+        { "name": "audit.read", "description": "View the audit log of changes to users and roles" }
       ]
     }
   },

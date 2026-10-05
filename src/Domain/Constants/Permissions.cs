@@ -31,4 +31,9 @@ public abstract class Permissions
         public const string Read = "roles.read";
         public const string Write = "roles.write";
     }
+
+    public abstract class Audit
+    {
+        public const string Read = "audit.read";
+    }
 }

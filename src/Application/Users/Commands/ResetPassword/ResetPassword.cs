@@ -18,14 +18,29 @@ public record ResetPasswordCommand : IRequest
 public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand>
 {
     private readonly IIdentityAdminService _identityAdminService;
+    private readonly IAuditLog _auditLog;
 
-    public ResetPasswordCommandHandler(IIdentityAdminService identityAdminService)
+    public ResetPasswordCommandHandler(IIdentityAdminService identityAdminService, IAuditLog auditLog)
     {
         _identityAdminService = identityAdminService;
+        _auditLog = auditLog;
     }
 
-    public Task Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
+    public async Task Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
     {
-        return _identityAdminService.ResetPasswordAsync(request.Id, request.Password, request.Temporary, cancellationToken);
+        var user = await _identityAdminService.GetUserAsync(request.Id, cancellationToken);
+
+        Guard.Against.NotFound(request.Id, user);
+
+        await _identityAdminService.ResetPasswordAsync(request.Id, request.Password, request.Temporary, cancellationToken);
+
+        // Never record the password itself.
+        await _auditLog.RecordAsync(
+            AuditActions.UserPasswordReset,
+            AuditTargets.User,
+            request.Id,
+            user.Username,
+            request.Temporary ? "must change at next sign-in" : null,
+            cancellationToken);
     }
 }

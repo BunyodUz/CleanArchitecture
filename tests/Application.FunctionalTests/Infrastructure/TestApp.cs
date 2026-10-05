@@ -48,7 +48,7 @@ public static class TestApp
         [Domain.Constants.Roles.Administrator],
         [
             Permissions.TodoLists.Read, Permissions.TodoLists.Write, Permissions.TodoItems.Read, Permissions.TodoItems.Write,
-            Permissions.Users.Read, Permissions.Users.Write, Permissions.Roles.Read, Permissions.Roles.Write,
+            Permissions.Users.Read, Permissions.Users.Write, Permissions.Roles.Read, Permissions.Roles.Write, Permissions.Audit.Read,
         ]);
 
     // No real identity provider is involved in functional tests — IUser is mocked directly

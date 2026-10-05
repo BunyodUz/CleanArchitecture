@@ -5,6 +5,7 @@ export const PERMISSIONS = {
   todoItems: { read: "todoitems.read", write: "todoitems.write" },
   users: { read: "users.read", write: "users.write" },
   roles: { read: "roles.read", write: "roles.write" },
+  audit: { read: "audit.read" },
 } as const;
 
 /** Plain-language meaning of each permission, as shown to end users (mirrors the realm's descriptions). */
@@ -17,6 +18,7 @@ export const PERMISSION_DESCRIPTIONS: Record<string, string> = {
   "users.write": "Create and edit users, reset passwords",
   "roles.read": "See roles and what they grant",
   "roles.write": "Create and edit roles, assign roles to users",
+  "audit.read": "See the audit log of changes to users and roles",
 };
 
 export const ADMINISTRATOR_ROLE = "Administrator";

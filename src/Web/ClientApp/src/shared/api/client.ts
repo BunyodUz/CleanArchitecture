@@ -1,6 +1,7 @@
 import { createEvent } from "effector";
 import {
   AccountClient,
+  AuditLogClient,
   RolesClient,
   TodoItemsClient,
   TodoListsClient,
@@ -35,3 +36,4 @@ export const todoItemsClient = new TodoItemsClient(API_BASE_URL, httpClient);
 export const weatherForecastsClient = new WeatherForecastsClient(API_BASE_URL, httpClient);
 export const usersClient = new UsersClient(API_BASE_URL, httpClient);
 export const rolesClient = new RolesClient(API_BASE_URL, httpClient);
+export const auditLogClient = new AuditLogClient(API_BASE_URL, httpClient);

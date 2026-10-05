@@ -1,5 +1,6 @@
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
+import "@mantine/spotlight/styles.css";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";

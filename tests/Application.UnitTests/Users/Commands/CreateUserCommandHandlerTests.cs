@@ -12,6 +12,7 @@ public class CreateUserCommandHandlerTests
 {
     private Mock<IIdentityAdminService> _identityAdminService = null!;
     private Mock<IUser> _user = null!;
+    private Mock<IAuditLog> _auditLog = null!;
     private CreateUserCommandHandler _handler = null!;
 
     [SetUp]
@@ -25,7 +26,8 @@ public class CreateUserCommandHandlerTests
             .ReturnsAsync("new-id");
 
         _user = new Mock<IUser>();
-        _handler = new CreateUserCommandHandler(_identityAdminService.Object, _user.Object);
+        _auditLog = new Mock<IAuditLog>();
+        _handler = new CreateUserCommandHandler(_identityAdminService.Object, _user.Object, _auditLog.Object);
     }
 
     [Test]
@@ -45,6 +47,8 @@ public class CreateUserCommandHandlerTests
 
         await Should.ThrowAsync<ForbiddenAccessException>(() =>
             _handler.Handle(new CreateUserCommand { Username = "new", Roles = ["Administrator"] }, CancellationToken.None));
+
+        _auditLog.VerifyNoOtherCalls();
     }
 
     [Test]
@@ -55,5 +59,7 @@ public class CreateUserCommandHandlerTests
         var id = await _handler.Handle(new CreateUserCommand { Username = "new", Roles = ["Member"] }, CancellationToken.None);
 
         id.ShouldBe("new-id");
+        _auditLog.Verify(a => a.RecordAsync(
+            AuditActions.UserCreated, AuditTargets.User, "new-id", "new", "roles: +Member", It.IsAny<CancellationToken>()));
     }
 }

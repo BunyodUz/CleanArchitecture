@@ -1,3 +1,4 @@
+using CleanArchitecture.Application.AuditEntries;
 using CleanArchitecture.Application.Common.Exceptions;
 using CleanArchitecture.Application.Common.Interfaces;
 using CleanArchitecture.Application.Common.Security;
@@ -31,14 +32,16 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, strin
 {
     private readonly IIdentityAdminService _identityAdminService;
     private readonly IUser _user;
+    private readonly IAuditLog _auditLog;
 
-    public CreateUserCommandHandler(IIdentityAdminService identityAdminService, IUser user)
+    public CreateUserCommandHandler(IIdentityAdminService identityAdminService, IUser user, IAuditLog auditLog)
     {
         _identityAdminService = identityAdminService;
         _user = user;
+        _auditLog = auditLog;
     }
 
-    public Task<string> Handle(CreateUserCommand request, CancellationToken cancellationToken)
+    public async Task<string> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
         // Same rule as SetUserRolesCommand, but conditional: creating a user without roles only
         // needs users.write, so it can't be expressed with a static [Authorize] attribute.
@@ -47,7 +50,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, strin
             throw new ForbiddenAccessException();
         }
 
-        return _identityAdminService.CreateUserAsync(
+        var id = await _identityAdminService.CreateUserAsync(
             request.Username,
             request.Email,
             request.FirstName,
@@ -56,5 +59,15 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, strin
             request.TemporaryPassword,
             request.Roles,
             cancellationToken);
+
+        await _auditLog.RecordAsync(
+            AuditActions.UserCreated,
+            AuditTargets.User,
+            id,
+            request.Username,
+            AuditDetails.SetChanges("roles", [], request.Roles),
+            cancellationToken);
+
+        return id;
     }
 }

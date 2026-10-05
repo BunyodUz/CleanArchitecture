@@ -1,4 +1,15 @@
-import { CloudSun, Hash, House, LayoutDashboard, ListChecks, ShieldCheck, Users, type LucideIcon } from "lucide-react";
+import {
+  CloudSun,
+  Hash,
+  History,
+  House,
+  LayoutDashboard,
+  ListChecks,
+  ShieldCheck,
+  UserRound,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { PERMISSIONS } from "@/shared/config/permissions";
 
 export type ShellVariant = "main" | "admin";
@@ -24,10 +35,23 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users, permission: PERMISSIONS.users.read },
   { href: "/admin/roles", label: "Roles", icon: ShieldCheck, permission: PERMISSIONS.roles.read },
+  { href: "/admin/audit", label: "Audit log", icon: History, permission: PERMISSIONS.audit.read },
 ];
 
 /** Permissions that open the admin area; holding any one is enough. */
-export const ADMIN_PERMISSIONS = [PERMISSIONS.users.read, PERMISSIONS.roles.read];
+export const ADMIN_PERMISSIONS = [PERMISSIONS.users.read, PERMISSIONS.roles.read, PERMISSIONS.audit.read];
+
+const PROFILE: NavItem = { href: "/profile", label: "Profile", icon: UserRound };
+
+/** Every page the current user can open, for the Ctrl+K search. */
+export function searchablePages(isAuthenticated: boolean, permissions: string[]) {
+  const canAdmin = ADMIN_PERMISSIONS.some((p) => permissions.includes(p));
+  return [
+    ...visibleNav("main", isAuthenticated, permissions).map((item) => ({ ...item, area: "Workspace" })),
+    ...(isAuthenticated ? [{ ...PROFILE, area: "Account" }] : []),
+    ...(canAdmin ? visibleNav("admin", isAuthenticated, permissions).map((item) => ({ ...item, area: "Administration" })) : []),
+  ];
+}
 
 export function visibleNav(variant: ShellVariant, isAuthenticated: boolean, permissions: string[]) {
   const items = variant === "admin" ? ADMIN_NAV : MAIN_NAV;

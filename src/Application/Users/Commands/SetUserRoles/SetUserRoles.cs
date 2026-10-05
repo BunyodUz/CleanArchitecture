@@ -1,3 +1,4 @@
+using CleanArchitecture.Application.AuditEntries;
 using CleanArchitecture.Application.Common.Interfaces;
 using CleanArchitecture.Application.Common.Security;
 using CleanArchitecture.Domain.Constants;
@@ -17,14 +18,27 @@ public record SetUserRolesCommand : IRequest
 public class SetUserRolesCommandHandler : IRequestHandler<SetUserRolesCommand>
 {
     private readonly IIdentityAdminService _identityAdminService;
+    private readonly IAuditLog _auditLog;
 
-    public SetUserRolesCommandHandler(IIdentityAdminService identityAdminService)
+    public SetUserRolesCommandHandler(IIdentityAdminService identityAdminService, IAuditLog auditLog)
     {
         _identityAdminService = identityAdminService;
+        _auditLog = auditLog;
     }
 
-    public Task Handle(SetUserRolesCommand request, CancellationToken cancellationToken)
+    public async Task Handle(SetUserRolesCommand request, CancellationToken cancellationToken)
     {
-        return _identityAdminService.SetUserRolesAsync(request.Id, request.Roles, cancellationToken);
+        var before = await _identityAdminService.GetUserAsync(request.Id, cancellationToken);
+
+        Guard.Against.NotFound(request.Id, before);
+
+        await _identityAdminService.SetUserRolesAsync(request.Id, request.Roles, cancellationToken);
+
+        // Saving the user dialog always sends the role list; only record an actual change.
+        var details = AuditDetails.SetChanges("roles", before.Roles, request.Roles);
+        if (details is not null)
+        {
+            await _auditLog.RecordAsync(AuditActions.UserRolesChanged, AuditTargets.User, request.Id, before.Username, details, cancellationToken);
+        }
     }
 }

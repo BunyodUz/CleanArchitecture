@@ -34,6 +34,8 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
+        builder.Services.AddScoped<IAuditLog, AuditLog>();
+
         builder.Services.AddSingleton(TimeProvider.System);
 
         builder.Services.Configure<KeycloakAdminOptions>(builder.Configuration.GetSection(KeycloakAdminOptions.SectionName));
