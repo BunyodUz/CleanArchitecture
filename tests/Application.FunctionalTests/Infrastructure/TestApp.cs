@@ -36,15 +36,20 @@ public static class TestApp
 
     public static List<string>? GetPermissions() => _permissions;
 
-    // Any authenticated user can manage their own todos today — only admin-only actions
-    // need the Administrator role, so the default test user gets the baseline permissions.
+    // Mirrors the realm's composite roles (deploy/keycloak/realm-export.json): what a token for a
+    // Member / Administrator would carry once Keycloak expands their role into permissions.
     public static Task<string> RunAsDefaultUserAsync() => RunAsUserAsync(
-        [],
+        ["Member"],
         [Permissions.TodoLists.Read, Permissions.TodoLists.Write, Permissions.TodoItems.Read, Permissions.TodoItems.Write]);
 
+    // Qualified: inside CleanArchitecture.Application.*, a bare "Roles" binds to the
+    // CleanArchitecture.Application.Roles feature namespace instead of the constants class.
     public static Task<string> RunAsAdministratorAsync() => RunAsUserAsync(
-        [Roles.Administrator],
-        [Permissions.TodoLists.Read, Permissions.TodoLists.Write, Permissions.TodoItems.Read, Permissions.TodoItems.Write]);
+        [Domain.Constants.Roles.Administrator],
+        [
+            Permissions.TodoLists.Read, Permissions.TodoLists.Write, Permissions.TodoItems.Read, Permissions.TodoItems.Write,
+            Permissions.Users.Read, Permissions.Users.Write, Permissions.Roles.Read, Permissions.Roles.Write, Permissions.Audit.Read,
+        ]);
 
     // No real identity provider is involved in functional tests — IUser is mocked directly
     // by WebApiFactory, so "running as" a user is just picking the id/roles/permissions it returns.

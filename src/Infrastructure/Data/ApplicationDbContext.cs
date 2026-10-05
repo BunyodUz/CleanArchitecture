@@ -13,6 +13,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
     public DbSet<TodoItem> TodoItems => Set<TodoItem>();
 
+    public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

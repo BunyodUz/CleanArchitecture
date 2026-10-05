@@ -1,11 +1,12 @@
 "use client";
 
-import { Anchor, List, Text, Title } from "@mantine/core";
+import { Anchor, List, Text } from "@mantine/core";
+import { PageHeader } from "@/shared/ui/PageHeader";
 
 export function HomeView() {
   return (
     <div>
-      <Title order={1}>Welcome</Title>
+      <PageHeader title="Welcome" />
       <Text>
         A full-stack application with a{" "}
         <Anchor href="https://react.dev/" target="_blank" rel="noreferrer">
@@ -54,7 +55,8 @@ export function HomeView() {
       <Text mt="md">To help you get started:</Text>
       <List mt="sm">
         <List.Item>
-          <strong>Client-side navigation.</strong> Click <em>Counter</em> then <em>Home</em> to return here.
+          <strong>Client-side navigation.</strong> Click <em>Counter</em> in the sidebar, then <em>Home</em> to return here. The
+          sidebar collapses to icons, and <kbd>Ctrl</kbd>+<kbd>K</kbd> jumps to any page.
         </List.Item>
         <List.Item>
           <strong>Feature-Sliced Design.</strong> The <code>ClientApp</code> source is organized into{" "}

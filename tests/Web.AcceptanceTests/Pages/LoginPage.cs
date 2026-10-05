@@ -16,8 +16,12 @@ public class LoginPage(IPage page) : BasePage(page)
     public Task ClickLogin()
         => Page.Locator("#kc-login").ClickAsync();
 
-    public Task<string?> LogoutButtonText()
-        => Page.Locator("a:has-text('Log out')").TextContentAsync();
+    // "Log out" lives in the account menu in the top bar, so open that menu first.
+    public async Task<string?> LogoutButtonText()
+    {
+        await Page.Locator("button[aria-label='Account menu']").ClickAsync();
+        return await Page.GetByRole(AriaRole.Menuitem, new() { Name = "Log out" }).TextContentAsync();
+    }
 
     public Task AssertErrorVisible()
         => Assertions.Expect(Page.GetByText("Invalid username or password")).ToBeVisibleAsync();

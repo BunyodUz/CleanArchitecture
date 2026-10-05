@@ -6,19 +6,20 @@ import {
   Button,
   Checkbox,
   ColorSwatch,
+  Flex,
   Group,
   Modal,
+  NavLink,
   Select,
   Stack,
   Text,
   Textarea,
   TextInput,
   Title,
-  UnstyledButton,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useUnit } from "effector-react";
-import { MoreHorizontal, Plus, Settings } from "lucide-react";
+import { ListTodo, MoreHorizontal, Plus, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   $colours,
@@ -38,6 +39,9 @@ import {
   updateListFx,
 } from "@/entities/todo";
 import { getFieldError } from "@/shared/lib/api-error";
+import { notifyError, notifySuccess } from "@/shared/lib/notify";
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { PageHeader } from "@/shared/ui/PageHeader";
 
 export function TodoView() {
   const [lists, colours, priorityLevels, selectedListId, loading] = useUnit([
@@ -49,7 +53,7 @@ export function TodoView() {
   ]);
 
   useEffect(() => {
-    fetchTodosFx();
+    fetchTodosFx().catch((e) => notifyError("Couldn't load your lists", e));
   }, []);
 
   const selectedList = lists.find((l) => l.id === selectedListId) ?? null;
@@ -73,7 +77,9 @@ export function TodoView() {
       await createListFx({ title: newListTitle.trim(), colour: newListColour });
       closeNewList();
     } catch (e) {
-      setNewListError(getFieldError(e, "Title") ?? "Failed to create list.");
+      const fieldError = getFieldError(e, "Title");
+      if (fieldError) setNewListError(fieldError);
+      else notifyError("Couldn't create the list", e);
     }
   };
 
@@ -91,8 +97,12 @@ export function TodoView() {
 
   const updateListOptions = async () => {
     if (!selectedList) return;
-    await updateListFx({ id: selectedList.id, title: listOptionsTitle, colour: listOptionsColour });
-    closeListOptions();
+    try {
+      await updateListFx({ id: selectedList.id, title: listOptionsTitle, colour: listOptionsColour });
+      closeListOptions();
+    } catch (e) {
+      notifyError("Couldn't update the list", e);
+    }
   };
 
   // ── Delete list dialog ─────────────────────────────────────────────────
@@ -105,8 +115,14 @@ export function TodoView() {
 
   const deleteListConfirmed = async () => {
     if (!selectedList) return;
-    await deleteListFx(selectedList.id);
-    closeDeleteList();
+    const title = selectedList.title;
+    try {
+      await deleteListFx(selectedList.id);
+      closeDeleteList();
+      notifySuccess("List deleted", `"${title}" and its tasks were removed.`);
+    } catch (e) {
+      notifyError("Couldn't delete the list", e);
+    }
   };
 
   // ── Item details dialog ────────────────────────────────────────────────
@@ -131,19 +147,27 @@ export function TodoView() {
 
   const updateItemDetails = async () => {
     if (!selectedItem || itemListId === null || itemPriority === null) return;
-    await updateItemDetailFx({
-      item: selectedItem,
-      listId: itemListId,
-      priority: itemPriority,
-      note: itemNote || undefined,
-    });
-    closeItemDetailsDialog();
+    try {
+      await updateItemDetailFx({
+        item: selectedItem,
+        listId: itemListId,
+        priority: itemPriority,
+        note: itemNote || undefined,
+      });
+      closeItemDetailsDialog();
+    } catch (e) {
+      notifyError("Couldn't update the task", e);
+    }
   };
 
   const deleteSelectedItem = async () => {
     if (!selectedItem) return;
-    await deleteItemFx(selectedItem);
-    closeItemDetailsDialog();
+    try {
+      await deleteItemFx(selectedItem);
+      closeItemDetailsDialog();
+    } catch (e) {
+      notifyError("Couldn't delete the task", e);
+    }
   };
 
   // ── Inline item title editing ──────────────────────────────────────────
@@ -165,15 +189,16 @@ export function TodoView() {
     const item = selectedList?.items.find((i) => i.id === editingItemId);
     setEditingItemId(null);
     if (!item) return;
-    if (!editValue.trim()) {
-      await deleteItemFx(item);
-      return;
+    try {
+      if (!editValue.trim()) await deleteItemFx(item);
+      else await updateItemFx({ ...item, title: editValue.trim() });
+    } catch (e) {
+      notifyError("Couldn't save the task", e);
     }
-    await updateItemFx({ ...item, title: editValue.trim() });
   };
 
   const updateCheckbox = (item: Todo, done: boolean) => {
-    updateItemFx({ ...item, done });
+    updateItemFx({ ...item, done }).catch((e) => notifyError("Couldn't update the task", e));
   };
 
   // ── New item ────────────────────────────────────────────────────────────
@@ -186,21 +211,34 @@ export function TodoView() {
     const title = newItemTitle.trim();
     setNewItemTitle("");
     if (!title || selectedListId === null) return;
-    await createItemFx({ listId: selectedListId, title });
+    try {
+      await createItemFx({ listId: selectedListId, title });
+    } catch (e) {
+      notifyError("Couldn't add the task", e);
+    }
   };
 
+  const header = (
+    <PageHeader title="Tasks" description="Manage your todo lists and tasks." breadcrumbs={[{ label: "Home", href: "/" }, { label: "Tasks" }]} />
+  );
+
   if (loading && lists.length === 0) {
-    return <Text aria-busy="true">Loading&hellip;</Text>;
+    return (
+      <>
+        {header}
+        <Text aria-busy="true">Loading&hellip;</Text>
+      </>
+    );
   }
 
   return (
     <div>
-      <Title order={1}>Tasks</Title>
-      <Text mb="md">Manage your todo lists and tasks.</Text>
+      {header}
 
-      <Group align="flex-start" gap="xl" wrap="nowrap">
+      {/* Lists sit above the items on phones and beside them from the sm breakpoint up. */}
+      <Flex direction={{ base: "column", sm: "row" }} align={{ base: "stretch", sm: "flex-start" }} gap="xl">
         {/* Sidebar */}
-        <Stack w={220} gap="xs">
+        <Stack w={{ base: "100%", sm: 220 }} gap="xs" style={{ flexShrink: 0 }}>
           <Group justify="space-between">
             <Title order={2} size="h4">
               Lists
@@ -210,31 +248,36 @@ export function TodoView() {
             </ActionIcon>
           </Group>
           <Stack gap={4}>
+            {/* NavLink's active state uses theme-aware colours, so the selection reads in dark mode too. */}
             {lists.map((list) => (
-              <UnstyledButton
+              <NavLink
                 key={list.id}
+                component="button"
                 onClick={() => selectList(list.id)}
-                p="xs"
-                style={{
-                  borderRadius: 4,
-                  background: list.id === selectedListId ? "var(--mantine-color-gray-1)" : undefined,
-                }}
-              >
-                <Group gap="xs" wrap="nowrap">
-                  <ColorSwatch color={list.colour} size={14} />
-                  <Text flex={1}>{list.title}</Text>
+                active={list.id === selectedListId}
+                aria-current={list.id === selectedListId ? "true" : undefined}
+                variant="light"
+                label={list.title}
+                leftSection={<ColorSwatch color={list.colour} size={14} />}
+                rightSection={
                   <Text size="sm" c="dimmed">
                     {list.items.filter((t) => !t.done).length}
                   </Text>
-                </Group>
-              </UnstyledButton>
+                }
+                style={{ borderRadius: "var(--mantine-radius-sm)" }}
+              />
             ))}
+            {lists.length === 0 && (
+              <EmptyState icon={<ListTodo size={24} />} title="No lists yet">
+                Use + to create your first list.
+              </EmptyState>
+            )}
           </Stack>
         </Stack>
 
         {/* Items panel */}
         {selectedList && (
-          <Stack flex={1} gap="xs">
+          <Stack flex={1} gap="xs" miw={0}>
             <Group justify="space-between">
               <Title order={2} size="h4" c={selectedList.colour}>
                 {selectedList.title}
@@ -324,7 +367,7 @@ export function TodoView() {
             </Group>
           </Stack>
         )}
-      </Group>
+      </Flex>
 
       {/* New list dialog */}
       <Modal opened={newListOpened} onClose={closeNewList} title="New List">

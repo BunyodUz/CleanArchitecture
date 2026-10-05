@@ -17,6 +17,10 @@ const apiBaseUrl = isDev
 
 const nextConfig: NextConfig = {
   output: "export",
+  // Exports each route as <route>/index.html (e.g. todo/index.html), which Kestrel's default-files
+  // middleware serves for /todo/ and redirects /todo → /todo/ to reach. Without it the export is
+  // todo.html, which the static file server never maps an extensionless URL onto.
+  trailingSlash: true,
   images: { unoptimized: true },
   env: {
     NEXT_PUBLIC_API_BASE_URL: apiBaseUrl,
