@@ -4,7 +4,7 @@ using CleanArchitecture.Domain.Constants;
 
 namespace CleanArchitecture.Application.Users.Commands.DeleteUser;
 
-[Authorize(Roles = Roles.Administrator)]
+[Authorize(Permissions = Permissions.Users.Write)]
 public record DeleteUserCommand(string Id) : IRequest;
 
 public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand>

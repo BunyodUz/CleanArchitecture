@@ -4,7 +4,7 @@ using CleanArchitecture.Domain.Constants;
 
 namespace CleanArchitecture.Application.Users.Commands.ResetPassword;
 
-[Authorize(Roles = Roles.Administrator)]
+[Authorize(Permissions = Permissions.Users.Write)]
 public record ResetPasswordCommand : IRequest
 {
     public string Id { get; init; } = string.Empty;

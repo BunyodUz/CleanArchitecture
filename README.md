@@ -66,14 +66,16 @@ dotnet run --project .\src\AppHost
 
 The Aspire dashboard will open automatically, showing the application URLs and logs. This also starts a local Keycloak instance (see [ADR-005](docs/decisions/ADR-005-Keycloak-Authentication-And-Permission-Based-Authorization.md)) with a realm imported from `deploy/keycloak/realm-export.json`. Sign in with the seeded dev users:
 
-| Username | Password | Notes |
-|---|---|---|
-| `administrator@localhost` | `Administrator1!` | Has the `Administrator` role and all todo permissions |
-| `member@localhost` | `Member1!` | Has the todo permissions only |
+| Username | Password | Role | Permissions (via the role) |
+|---|---|---|---|
+| `administrator@localhost` | `Administrator1!` | `Administrator` | Everything: todos, users, roles |
+| `member@localhost` | `Member1!` | `Member` | Todo lists and items only |
 
 These are local-dev-only accounts defined in the realm export — change or remove them for anything beyond local development.
 
-Signed in as `administrator`, a **Users** link appears in the nav — it manages Keycloak users and their realm roles directly from the app via Keycloak's Admin REST API (see [ADR-006](docs/decisions/ADR-006-Keycloak-Admin-API-User-Management.md)).
+Authorization is role-based (see [ADR-007](docs/decisions/ADR-007-Role-Based-Access-Control-With-Composite-Roles.md)): users are assigned **roles**, roles bundle **permissions**, and every check in the app is a permission check. Signed in as `administrator`, **Users** and **Roles** links appear in the nav for managing users, their role assignments, and which permissions each role grants — all stored in Keycloak and managed through its Admin REST API ([ADR-006](docs/decisions/ADR-006-Keycloak-Admin-API-User-Management.md)).
+
+> Keycloak only imports `deploy/keycloak/realm-export.json` when the realm doesn't exist yet. If you ran the app before these roles were added, delete the Keycloak data volume and restart the AppHost to re-import it.
 
 To learn more, see the [Getting started](https://cleanarchitecture.jasontaylor.dev/docs/getting-started/) guide and [Architecture](https://cleanarchitecture.jasontaylor.dev/docs/architecture/) overview.
 

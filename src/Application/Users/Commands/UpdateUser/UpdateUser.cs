@@ -4,7 +4,7 @@ using CleanArchitecture.Domain.Constants;
 
 namespace CleanArchitecture.Application.Users.Commands.UpdateUser;
 
-[Authorize(Roles = Roles.Administrator)]
+[Authorize(Permissions = Permissions.Users.Write)]
 public record UpdateUserCommand : IRequest
 {
     public string Id { get; init; } = string.Empty;

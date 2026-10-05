@@ -1,5 +1,6 @@
 import {
   AccountClient,
+  RolesClient,
   TodoItemsClient,
   TodoListsClient,
   UsersClient,
@@ -25,3 +26,4 @@ export const todoListsClient = new TodoListsClient(API_BASE_URL, httpClient);
 export const todoItemsClient = new TodoItemsClient(API_BASE_URL, httpClient);
 export const weatherForecastsClient = new WeatherForecastsClient(API_BASE_URL, httpClient);
 export const usersClient = new UsersClient(API_BASE_URL, httpClient);
+export const rolesClient = new RolesClient(API_BASE_URL, httpClient);

@@ -51,4 +51,17 @@ internal sealed class RoleRepresentation
 
     [JsonPropertyName("name")]
     public string? Name { get; set; }
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+}
+
+/// <summary>Keycloak Admin REST API's ClientRepresentation — only used to resolve a clientId to its internal UUID.</summary>
+internal sealed class ClientRepresentation
+{
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+
+    [JsonPropertyName("clientId")]
+    public string? ClientId { get; set; }
 }

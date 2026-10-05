@@ -4,7 +4,9 @@ using CleanArchitecture.Domain.Constants;
 
 namespace CleanArchitecture.Application.Users.Commands.SetUserRoles;
 
-[Authorize(Roles = Domain.Constants.Roles.Administrator)]
+// Assigning roles is how permissions are granted, so it needs roles.write on top of users.write —
+// otherwise users.write alone would be enough to promote anyone (including yourself) to Administrator.
+[Authorize(Permissions = Permissions.Users.Write + "," + Permissions.Roles.Write)]
 public record SetUserRolesCommand : IRequest
 {
     public string Id { get; init; } = string.Empty;

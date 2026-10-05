@@ -2,7 +2,6 @@ import { createEffect, createStore } from "effector";
 import { usersClient } from "@/shared/api/client";
 import {
   CreateUserCommand,
-  IdentityRoleDto,
   IdentityUserDto,
   ResetPasswordCommand,
   SetUserRolesCommand,
@@ -10,10 +9,8 @@ import {
 } from "@/web-api-client";
 
 export const fetchUsersFx = createEffect((search?: string) => usersClient.getUsers(search));
-export const fetchRolesFx = createEffect(() => usersClient.getRoles());
 
 export const $users = createStore<IdentityUserDto[]>([]).on(fetchUsersFx.doneData, (_, users) => users);
-export const $availableRoles = createStore<IdentityRoleDto[]>([]).on(fetchRolesFx.doneData, (_, roles) => roles);
 export const $usersLoading = fetchUsersFx.pending;
 
 export interface CreateUserParams {

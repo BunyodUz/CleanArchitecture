@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted — amended by [ADR-007](ADR-007-Role-Based-Access-Control-With-Composite-Roles.md): user management is now gated on `users.read`/`users.write` permissions rather than the `Administrator` role, and the admin-api service account gained role-management rights.
 
 ## Date
 
@@ -35,6 +35,8 @@ Add a `/api/Users` endpoint group backed entirely by Keycloak's [Admin REST API]
 Keycloak's Admin REST API is small enough (a handful of endpoints, all plain JSON) that a typed SDK dependency buys little beyond what `HttpClient` + a few DTOs already provide, and keeps this template's dependency footprint the same as every other outbound call it makes.
 
 ### Roles, not Permissions, for the gate
+
+> **Superseded by ADR-007.** Once roles became bundles of permissions, a role check at the call site became the odd one out — user management is now gated on `users.read`/`users.write` like everything else. The reasoning below is kept for history.
 
 Per ADR-005, `Permissions` answers "can this user do X" for a specific resource/feature; `Roles` answers "what is this user" for whole-app gates. User management is squarely the second question — there's no finer-grained shape to it (no "can edit some users but not others"), so it uses `[Authorize(Roles = Roles.Administrator)]` rather than inventing `users.read`/`users.write` permissions that would only ever be held by administrators anyway.
 

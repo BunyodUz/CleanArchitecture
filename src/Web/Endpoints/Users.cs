@@ -4,7 +4,6 @@ using CleanArchitecture.Application.Users.Commands.DeleteUser;
 using CleanArchitecture.Application.Users.Commands.ResetPassword;
 using CleanArchitecture.Application.Users.Commands.SetUserRoles;
 using CleanArchitecture.Application.Users.Commands.UpdateUser;
-using CleanArchitecture.Application.Users.Queries.GetRoles;
 using CleanArchitecture.Application.Users.Queries.GetUser;
 using CleanArchitecture.Application.Users.Queries.GetUsers;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -18,7 +17,6 @@ public class Users : IEndpointGroup
         groupBuilder.RequireAuthorization();
 
         groupBuilder.MapGet(GetUsers);
-        groupBuilder.MapGet(GetRoles, "roles");
         groupBuilder.MapGet(GetUser, "{id}");
         groupBuilder.MapPost(CreateUser);
         groupBuilder.MapPut(UpdateUser, "{id}");
@@ -34,15 +32,6 @@ public class Users : IEndpointGroup
         var users = await sender.Send(new GetUsersQuery(search));
 
         return TypedResults.Ok(users);
-    }
-
-    [EndpointSummary("Get the assignable realm roles")]
-    [EndpointDescription("Retrieves the realm roles that can be assigned to a user.")]
-    public static async Task<Ok<IReadOnlyList<IdentityRoleDto>>> GetRoles(ISender sender)
-    {
-        var roles = await sender.Send(new GetRolesQuery());
-
-        return TypedResults.Ok(roles);
     }
 
     [EndpointSummary("Get a user")]
@@ -94,8 +83,8 @@ public class Users : IEndpointGroup
         return TypedResults.NoContent();
     }
 
-    [EndpointSummary("Set a user's realm roles")]
-    [EndpointDescription("Replaces the specified user's realm role assignments.")]
+    [EndpointSummary("Set a user's roles")]
+    [EndpointDescription("Replaces the specified user's role assignments. Requires both users.write and roles.write.")]
     public static async Task<Results<NoContent, BadRequest>> SetUserRoles(ISender sender, string id, SetUserRolesCommand command)
     {
         if (id != command.Id) return TypedResults.BadRequest();

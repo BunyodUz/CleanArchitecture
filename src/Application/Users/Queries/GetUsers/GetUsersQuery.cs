@@ -5,7 +5,7 @@ using CleanArchitecture.Domain.Constants;
 
 namespace CleanArchitecture.Application.Users.Queries.GetUsers;
 
-[Authorize(Roles = Roles.Administrator)]
+[Authorize(Permissions = Permissions.Users.Read)]
 public record GetUsersQuery(string? Search = null) : IRequest<IReadOnlyList<IdentityUserDto>>;
 
 public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, IReadOnlyList<IdentityUserDto>>

@@ -3,9 +3,9 @@ using CleanArchitecture.Application.Common.Models;
 using CleanArchitecture.Application.Common.Security;
 using CleanArchitecture.Domain.Constants;
 
-namespace CleanArchitecture.Application.Users.Queries.GetRoles;
+namespace CleanArchitecture.Application.Roles.Queries.GetRoles;
 
-[Authorize(Roles = Roles.Administrator)]
+[Authorize(Permissions = Permissions.Roles.Read)]
 public record GetRolesQuery : IRequest<IReadOnlyList<IdentityRoleDto>>;
 
 public class GetRolesQueryHandler : IRequestHandler<GetRolesQuery, IReadOnlyList<IdentityRoleDto>>

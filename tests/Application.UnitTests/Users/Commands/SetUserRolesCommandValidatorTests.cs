@@ -18,7 +18,7 @@ public class SetUserRolesCommandValidatorTests
         _identityAdminService = new Mock<IIdentityAdminService>();
         _identityAdminService
             .Setup(s => s.GetRolesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync([new IdentityRoleDto("role-1", "Administrator")]);
+            .ReturnsAsync([new IdentityRoleDto { Id = "role-1", Name = "Administrator" }]);
 
         _validator = new SetUserRolesCommandValidator(_identityAdminService.Object);
     }

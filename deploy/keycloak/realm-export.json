@@ -6,14 +6,40 @@
   "registrationEmailAsUsername": true,
   "roles": {
     "realm": [
-      { "name": "Administrator", "description": "Whole-app administrator" }
+      {
+        "name": "Administrator",
+        "description": "Whole-app administrator",
+        "composite": true,
+        "composites": {
+          "client": {
+            "cleanarchitecture-web": [
+              "todolists.read", "todolists.write", "todoitems.read", "todoitems.write",
+              "users.read", "users.write", "roles.read", "roles.write"
+            ]
+          }
+        }
+      },
+      {
+        "name": "Member",
+        "description": "Standard user",
+        "composite": true,
+        "composites": {
+          "client": {
+            "cleanarchitecture-web": ["todolists.read", "todolists.write", "todoitems.read", "todoitems.write"]
+          }
+        }
+      }
     ],
     "client": {
       "cleanarchitecture-web": [
         { "name": "todolists.read", "description": "Read todo lists" },
         { "name": "todolists.write", "description": "Create/update/delete todo lists" },
         { "name": "todoitems.read", "description": "Read todo items" },
-        { "name": "todoitems.write", "description": "Create/update/delete todo items" }
+        { "name": "todoitems.write", "description": "Create/update/delete todo items" },
+        { "name": "users.read", "description": "View users" },
+        { "name": "users.write", "description": "Create/update/delete users and reset passwords" },
+        { "name": "roles.read", "description": "View roles and their permissions" },
+        { "name": "roles.write", "description": "Create/update/delete roles and assign roles to users" }
       ]
     }
   },
@@ -38,7 +64,36 @@
       ],
       "attributes": {
         "post.logout.redirect.uris": "http://localhost:5000/signout-callback-oidc##https://localhost:5001/signout-callback-oidc"
-      }
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles (id token)",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "multivalued": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "permissions (id token)",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "config": {
+            "multivalued": "true",
+            "claim.name": "resource_access.${client_id}.roles",
+            "usermodel.clientRoleMapping.clientId": "cleanarchitecture-web",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
     },
     {
       "clientId": "cleanarchitecture-admin-api",
@@ -62,10 +117,7 @@
       "credentials": [
         { "type": "password", "value": "Administrator1!", "temporary": false }
       ],
-      "realmRoles": ["Administrator"],
-      "clientRoles": {
-        "cleanarchitecture-web": ["todolists.read", "todolists.write", "todoitems.read", "todoitems.write"]
-      }
+      "realmRoles": ["Administrator"]
     },
     {
       "username": "member",
@@ -75,16 +127,18 @@
       "credentials": [
         { "type": "password", "value": "Member1!", "temporary": false }
       ],
-      "clientRoles": {
-        "cleanarchitecture-web": ["todolists.read", "todolists.write", "todoitems.read", "todoitems.write"]
-      }
+      "realmRoles": ["Member"]
     },
     {
       "username": "service-account-cleanarchitecture-admin-api",
       "enabled": true,
       "serviceAccountClientId": "cleanarchitecture-admin-api",
       "clientRoles": {
-        "realm-management": ["view-realm", "view-users", "query-users", "query-groups", "manage-users"]
+        "realm-management": [
+          "view-realm", "manage-realm",
+          "view-users", "query-users", "query-groups", "manage-users",
+          "view-clients", "query-clients", "manage-clients"
+        ]
       }
     }
   ]

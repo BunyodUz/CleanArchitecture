@@ -19,29 +19,39 @@ import { useDisclosure } from "@mantine/hooks";
 import { useUnit } from "effector-react";
 import { KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { $roles, fetchRolesFx } from "@/entities/role";
+import { $permissions } from "@/entities/session";
 import {
-  $availableRoles,
   $users,
   $usersLoading,
   createUserFx,
   deleteUserFx,
-  fetchRolesFx,
   fetchUsersFx,
   resetPasswordFx,
   setUserRolesFx,
   updateUserFx,
 } from "@/entities/user";
+import { PERMISSIONS } from "@/shared/config/permissions";
 import { getFieldError } from "@/shared/lib/api-error";
 import type { IdentityUserDto } from "@/web-api-client";
 
 export function UsersView() {
-  const [users, availableRoles, loading] = useUnit([$users, $availableRoles, $usersLoading]);
-  const roleOptions = availableRoles.map((r) => r.name);
+  const [users, roles, loading, myPermissions] = useUnit([$users, $roles, $usersLoading, $permissions]);
+
+  // Mirrors the API's rules (the API enforces them regardless): editing users needs users.write,
+  // and assigning roles additionally needs roles.write — plus roles.read to list the options.
+  const canWriteUsers = myPermissions.includes(PERMISSIONS.users.write);
+  const canReadRoles = myPermissions.includes(PERMISSIONS.roles.read);
+  const canAssignRoles = canWriteUsers && canReadRoles && myPermissions.includes(PERMISSIONS.roles.write);
+  const roleOptions = roles.flatMap((r) => (r.name ? [r.name] : []));
 
   useEffect(() => {
     fetchUsersFx();
-    fetchRolesFx();
   }, []);
+
+  useEffect(() => {
+    if (canReadRoles) fetchRolesFx();
+  }, [canReadRoles]);
 
   // ── New user dialog ────────────────────────────────────────────────────
   const [newUserOpened, { open: openNewUser, close: closeNewUser }] = useDisclosure(false);
@@ -74,7 +84,7 @@ export function UsersView() {
         lastName: newLastName.trim() || undefined,
         password: newPassword.trim() || undefined,
         temporaryPassword: true,
-        roles: newRoles,
+        roles: canAssignRoles ? newRoles : [],
       });
       closeNewUser();
     } catch (e) {
@@ -116,7 +126,9 @@ export function UsersView() {
         lastName: editLastName.trim() || undefined,
         enabled: editEnabled,
       });
-      await setUserRolesFx({ id: editingUser.id, roles: editRoles });
+      if (canAssignRoles) {
+        await setUserRolesFx({ id: editingUser.id, roles: editRoles });
+      }
       closeEditUser();
     } catch (e) {
       setEditUserError(getFieldError(e, "Username") ?? "Failed to update user.");
@@ -172,11 +184,13 @@ export function UsersView() {
       <Group justify="space-between" mb="md">
         <div>
           <Title order={1}>Users</Title>
-          <Text>Manage Keycloak users and their realm roles.</Text>
+          <Text>Manage Keycloak users and the roles assigned to them.</Text>
         </div>
-        <Button leftSection={<Plus size={16} />} onClick={showNewUserDialog}>
-          New user
-        </Button>
+        {canWriteUsers && (
+          <Button leftSection={<Plus size={16} />} onClick={showNewUserDialog}>
+            New user
+          </Button>
+        )}
       </Group>
 
       {loading && users.length === 0 ? (
@@ -190,7 +204,7 @@ export function UsersView() {
               <Table.Th>Email</Table.Th>
               <Table.Th>Roles</Table.Th>
               <Table.Th>Status</Table.Th>
-              <Table.Th />
+              {canWriteUsers && <Table.Th />}
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -213,23 +227,30 @@ export function UsersView() {
                     {user.enabled ? "Enabled" : "Disabled"}
                   </Badge>
                 </Table.Td>
-                <Table.Td>
-                  <Group gap={4} wrap="nowrap">
-                    <ActionIcon variant="subtle" aria-label="Edit user" onClick={() => showEditUserDialog(user)}>
-                      <Pencil size={18} strokeWidth={2} />
-                    </ActionIcon>
-                    <ActionIcon
-                      variant="subtle"
-                      aria-label="Reset password"
-                      onClick={() => showResetPasswordDialog(user)}
-                    >
-                      <KeyRound size={18} strokeWidth={2} />
-                    </ActionIcon>
-                    <ActionIcon variant="subtle" color="red" aria-label="Delete user" onClick={() => confirmDeleteUser(user)}>
-                      <Trash2 size={18} strokeWidth={2} />
-                    </ActionIcon>
-                  </Group>
-                </Table.Td>
+                {canWriteUsers && (
+                  <Table.Td>
+                    <Group gap={4} wrap="nowrap">
+                      <ActionIcon variant="subtle" aria-label="Edit user" onClick={() => showEditUserDialog(user)}>
+                        <Pencil size={18} strokeWidth={2} />
+                      </ActionIcon>
+                      <ActionIcon
+                        variant="subtle"
+                        aria-label="Reset password"
+                        onClick={() => showResetPasswordDialog(user)}
+                      >
+                        <KeyRound size={18} strokeWidth={2} />
+                      </ActionIcon>
+                      <ActionIcon
+                        variant="subtle"
+                        color="red"
+                        aria-label="Delete user"
+                        onClick={() => confirmDeleteUser(user)}
+                      >
+                        <Trash2 size={18} strokeWidth={2} />
+                      </ActionIcon>
+                    </Group>
+                  </Table.Td>
+                )}
               </Table.Tr>
             ))}
           </Table.Tbody>
@@ -261,12 +282,9 @@ export function UsersView() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.currentTarget.value)}
           />
-          <MultiSelect
-            label="Roles"
-            data={roleOptions}
-            value={newRoles}
-            onChange={setNewRoles}
-          />
+          {canAssignRoles && (
+            <MultiSelect label="Roles" data={roleOptions} value={newRoles} onChange={setNewRoles} />
+          )}
           <Group justify="flex-end">
             <Button variant="default" onClick={closeNewUser}>
               Cancel
@@ -308,7 +326,9 @@ export function UsersView() {
             checked={editEnabled}
             onChange={(e) => setEditEnabled(e.currentTarget.checked)}
           />
-          <MultiSelect label="Roles" data={roleOptions} value={editRoles} onChange={setEditRoles} />
+          {canAssignRoles && (
+            <MultiSelect label="Roles" data={roleOptions} value={editRoles} onChange={setEditRoles} />
+          )}
           <Group justify="flex-end">
             <Button variant="default" onClick={closeEditUser}>
               Cancel

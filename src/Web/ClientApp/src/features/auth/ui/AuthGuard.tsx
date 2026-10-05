@@ -4,24 +4,24 @@ import { useUnit } from "effector-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { ReactNode } from "react";
-import { $isAuthenticated, $roles, $sessionLoading } from "@/entities/session";
+import { $isAuthenticated, $permissions, $sessionLoading } from "@/entities/session";
 
 interface AuthGuardProps {
   children: ReactNode;
-  /** When set, the caller must also hold this realm role (e.g. "Administrator"), or they're
+  /** When set, the caller must also hold this permission (e.g. "users.read"), or they're
    * redirected home instead of being shown the page. */
-  requireRole?: string;
+  requirePermission?: string;
 }
 
 // Mirrors the old react-router ProtectedRoute: renders nothing while the session is loading or
 // while redirecting, and only reveals its children once the session is confirmed authenticated
-// (and, when requireRole is set, the user holds that role).
-export function AuthGuard({ children, requireRole }: AuthGuardProps) {
-  const [isAuthenticated, roles, isLoading] = useUnit([$isAuthenticated, $roles, $sessionLoading]);
+// (and, when requirePermission is set, the user holds that permission).
+export function AuthGuard({ children, requirePermission }: AuthGuardProps) {
+  const [isAuthenticated, permissions, isLoading] = useUnit([$isAuthenticated, $permissions, $sessionLoading]);
   const router = useRouter();
   const pathname = usePathname();
 
-  const hasRequiredRole = !requireRole || roles.includes(requireRole);
+  const isAllowed = !requirePermission || permissions.includes(requirePermission);
 
   useEffect(() => {
     if (isLoading) return;
@@ -31,12 +31,12 @@ export function AuthGuard({ children, requireRole }: AuthGuardProps) {
       return;
     }
 
-    if (!hasRequiredRole) {
+    if (!isAllowed) {
       router.replace("/");
     }
-  }, [isLoading, isAuthenticated, hasRequiredRole, pathname, router]);
+  }, [isLoading, isAuthenticated, isAllowed, pathname, router]);
 
-  if (isLoading || !isAuthenticated || !hasRequiredRole) {
+  if (isLoading || !isAuthenticated || !isAllowed) {
     return null;
   }
 
