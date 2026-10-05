@@ -51,7 +51,21 @@ app.MapDefaultEndpoints();
 app.MapEndpoints(typeof(Program).Assembly);
 
 #if (!UseApiOnly)
-app.MapFallbackToFile("index.html");
+// Every frontend route is a real file in the static export (<route>/index.html, served by
+// UseFileServer above), so a request that reaches here doesn't exist. Answer with the exported
+// not-found page and a real 404, rather than index.html with a 200 — which rendered the Home
+// page for unknown URLs and broke deep links/refreshes on every other route.
+app.MapFallback(async context =>
+{
+    context.Response.StatusCode = StatusCodes.Status404NotFound;
+
+    var notFoundPage = app.Environment.WebRootFileProvider.GetFileInfo("404.html");
+    if (notFoundPage.Exists && !context.Request.Path.StartsWithSegments("/api"))
+    {
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.SendFileAsync(notFoundPage);
+    }
+});
 #endif
 
 app.Run();

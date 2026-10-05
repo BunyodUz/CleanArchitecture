@@ -1,10 +1,11 @@
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Layout } from "@/widgets/layout";
+import { SessionExpiredModal } from "@/features/auth";
 import { Providers } from "@/shared/ui/Providers";
-import { SessionInit } from "./SessionInit";
+import { ClientInit } from "./ClientInit";
 
 export const metadata: Metadata = {
   title: "Clean Architecture",
@@ -16,6 +17,8 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+// The page frame lives in the (main) and admin route-group layouts, so each area can choose
+// its own shell; this root layout only holds what every page shares.
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" {...mantineHtmlProps}>
@@ -26,8 +29,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body>
         <Providers>
-          <SessionInit />
-          <Layout>{children}</Layout>
+          <ClientInit />
+          <SessionExpiredModal />
+          {children}
         </Providers>
       </body>
     </html>

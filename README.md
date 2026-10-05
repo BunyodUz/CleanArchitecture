@@ -73,7 +73,7 @@ The Aspire dashboard will open automatically, showing the application URLs and l
 
 These are local-dev-only accounts defined in the realm export — change or remove them for anything beyond local development.
 
-Authorization is role-based (see [ADR-007](docs/decisions/ADR-007-Role-Based-Access-Control-With-Composite-Roles.md)): users are assigned **roles**, roles bundle **permissions**, and every check in the app is a permission check. Signed in as `administrator`, **Users** and **Roles** links appear in the nav for managing users, their role assignments, and which permissions each role grants — all stored in Keycloak and managed through its Admin REST API ([ADR-006](docs/decisions/ADR-006-Keycloak-Admin-API-User-Management.md)).
+Authorization is role-based (see [ADR-007](docs/decisions/ADR-007-Role-Based-Access-Control-With-Composite-Roles.md)): users are assigned **roles**, roles bundle **permissions**, and every check in the app is a permission check. Signed in as `administrator`, the account menu (top right) has an **Admin** entry that switches to the admin layout (`/admin`), whose sidebar has **Users** and **Roles** pages for managing users, their role assignments, and which permissions each role grants — all stored in Keycloak and managed through its Admin REST API ([ADR-006](docs/decisions/ADR-006-Keycloak-Admin-API-User-Management.md)).
 
 > Keycloak only imports `deploy/keycloak/realm-export.json` when the realm doesn't exist yet. If you ran the app before these roles were added, delete the Keycloak data volume and restart the AppHost to re-import it.
 

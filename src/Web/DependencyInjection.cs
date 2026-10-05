@@ -45,7 +45,21 @@ public static class DependencyInjection
                 options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
                 options.DefaultSignOutScheme = OpenIdConnectDefaults.AuthenticationScheme;
             })
-            .AddCookie()
+            .AddCookie(options =>
+            {
+                // API callers (the SPA's fetches) get a status code, not a redirect to an HTML page.
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    if (IsApiRequest(context.Request))
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        return Task.CompletedTask;
+                    }
+
+                    context.Response.Redirect(context.RedirectUri);
+                    return Task.CompletedTask;
+                };
+            })
             .AddOpenIdConnect(options =>
             {
                 builder.Configuration.GetSection("Authentication:Keycloak").Bind(options);
@@ -66,6 +80,20 @@ public static class DependencyInjection
 
                 options.Events = new OpenIdConnectEvents
                 {
+                    // An unauthenticated API call (e.g. the session cookie expired) would otherwise be
+                    // redirected to Keycloak's login page; fetch follows that cross-origin redirect and
+                    // fails with an opaque network error. A plain 401 lets the SPA tell "your session
+                    // expired" apart from "the server is down" and prompt the user to sign in again.
+                    OnRedirectToIdentityProvider = context =>
+                    {
+                        if (IsApiRequest(context.Request))
+                        {
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            context.HandleResponse();
+                        }
+
+                        return Task.CompletedTask;
+                    },
                     // Keycloak needs the id_token_hint to complete RP-initiated logout
                     // (without it, it can't tell which session to end and shows a confirmation page).
                     OnRedirectToIdentityProviderForSignOut = async context =>
@@ -98,6 +126,8 @@ public static class DependencyInjection
 
         builder.Services.AddCors();
     }
+
+    private static bool IsApiRequest(HttpRequest request) => request.Path.StartsWithSegments("/api");
 
     public static void AddKeyVaultIfConfigured(this IHostApplicationBuilder builder)
     {

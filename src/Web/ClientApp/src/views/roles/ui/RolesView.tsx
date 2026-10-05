@@ -8,16 +8,15 @@ import {
   Group,
   Modal,
   SimpleGrid,
+  Skeleton,
   Stack,
   Table,
   Text,
   TextInput,
-  Title,
   Tooltip,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
 import { useUnit } from "effector-react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Lock, Pencil, Plus, ShieldOff, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   $permissionCatalog,
@@ -30,8 +29,11 @@ import {
   updateRoleFx,
 } from "@/entities/role";
 import { $permissions } from "@/entities/session";
-import { getFieldError } from "@/shared/lib/api-error";
 import { ADMINISTRATOR_ROLE, PERMISSIONS } from "@/shared/config/permissions";
+import { getFieldError } from "@/shared/lib/api-error";
+import { notifyError, notifySuccess } from "@/shared/lib/notify";
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { PageHeader } from "@/shared/ui/PageHeader";
 import type { IdentityPermissionDto, IdentityRoleDto } from "@/web-api-client";
 
 // "todolists.read" → "todolists"; the catalog is grouped by resource in the editor.
@@ -46,202 +48,228 @@ function groupByResource(catalog: IdentityPermissionDto[]) {
   return [...groups.entries()];
 }
 
+type Dialog = { kind: "create" } | { kind: "edit"; role: IdentityRoleDto } | { kind: "delete"; role: IdentityRoleDto } | null;
+
 export function RolesView() {
   const [roles, catalog, loading, myPermissions] = useUnit([$roles, $permissionCatalog, $rolesLoading, $permissions]);
   const canWrite = myPermissions.includes(PERMISSIONS.roles.write);
+  const [dialog, setDialog] = useState<Dialog>(null);
 
   useEffect(() => {
-    fetchRolesFx();
-    fetchPermissionsFx();
+    fetchRolesFx().catch((e) => notifyError("Couldn't load roles", e));
+    fetchPermissionsFx().catch(() => undefined);
   }, []);
 
-  // ── Create / edit dialog ───────────────────────────────────────────────
-  const [editorOpened, { open: openEditor, close: closeEditor }] = useDisclosure(false);
-  const [editingRole, setEditingRole] = useState<IdentityRoleDto | null>(null);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [selected, setSelected] = useState<string[]>([]);
-  const [error, setError] = useState("");
+  const close = () => setDialog(null);
 
-  const showEditor = (role: IdentityRoleDto | null) => {
-    setEditingRole(role);
-    setName(role?.name ?? "");
-    setDescription(role?.description ?? "");
-    setSelected(role?.permissions ?? []);
-    setError("");
-    openEditor();
-  };
+  return (
+    <>
+      <PageHeader
+        title="Roles"
+        description="Roles bundle permissions. Users are assigned roles, never permissions directly."
+        breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Roles" }]}
+        action={
+          canWrite && (
+            <Button leftSection={<Plus size={16} />} onClick={() => setDialog({ kind: "create" })}>
+              New role
+            </Button>
+          )
+        }
+      />
 
-  const commitEditor = async () => {
-    if (!name.trim()) return;
+      {loading && roles.length === 0 ? (
+        <Stack gap="xs">
+          {Array.from({ length: 3 }, (_, i) => (
+            <Skeleton key={i} h={48} radius="sm" />
+          ))}
+        </Stack>
+      ) : roles.length === 0 ? (
+        <EmptyState icon={<ShieldOff size={28} />} title="No roles yet">
+          Create a role to bundle permissions, then assign it to users.
+        </EmptyState>
+      ) : (
+        <Table.ScrollContainer minWidth={720}>
+          <Table verticalSpacing="sm" highlightOnHover>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Name</Table.Th>
+                <Table.Th>Description</Table.Th>
+                <Table.Th>Permissions</Table.Th>
+                {canWrite && <Table.Th />}
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {roles.map((role) => {
+                const isBuiltIn = role.name === ADMINISTRATOR_ROLE;
+                return (
+                  <Table.Tr key={role.name}>
+                    <Table.Td style={{ whiteSpace: "nowrap" }}>
+                      <Group gap="xs" wrap="nowrap">
+                        <Text fw={500}>{role.name}</Text>
+                        {isBuiltIn && (
+                          // Badges truncate their label by default; this one must always read in full.
+                          <Badge size="sm" variant="outline" color="gray" style={{ flexShrink: 0, overflow: "visible" }}>
+                            Built-in
+                          </Badge>
+                        )}
+                      </Group>
+                    </Table.Td>
+                    <Table.Td>{role.description}</Table.Td>
+                    <Table.Td>
+                      <Group gap={4}>
+                        {(role.permissions ?? []).map((permission) => (
+                          <Badge key={permission} variant="light" tt="none">
+                            {permission}
+                          </Badge>
+                        ))}
+                      </Group>
+                    </Table.Td>
+                    {canWrite && (
+                      <Table.Td>
+                        <Group gap={2} justify="flex-end" wrap="nowrap">
+                          {isBuiltIn ? (
+                            <Tooltip label="The Administrator role can't be modified">
+                              <ActionIcon variant="subtle" color="gray" aria-label="Locked role" data-disabled>
+                                <Lock size={18} />
+                              </ActionIcon>
+                            </Tooltip>
+                          ) : (
+                            <>
+                              <Tooltip label="Edit">
+                                <ActionIcon variant="subtle" aria-label={`Edit ${role.name}`} onClick={() => setDialog({ kind: "edit", role })}>
+                                  <Pencil size={18} />
+                                </ActionIcon>
+                              </Tooltip>
+                              <Tooltip label="Delete">
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="red"
+                                  aria-label={`Delete ${role.name}`}
+                                  onClick={() => setDialog({ kind: "delete", role })}
+                                >
+                                  <Trash2 size={18} />
+                                </ActionIcon>
+                              </Tooltip>
+                            </>
+                          )}
+                        </Group>
+                      </Table.Td>
+                    )}
+                  </Table.Tr>
+                );
+              })}
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
+      )}
+
+      {(dialog?.kind === "create" || dialog?.kind === "edit") && (
+        <RoleFormModal role={dialog.kind === "edit" ? dialog.role : undefined} catalog={catalog} onClose={close} />
+      )}
+      {dialog?.kind === "delete" && <DeleteRoleModal role={dialog.role} onClose={close} />}
+    </>
+  );
+}
+
+function RoleFormModal({ role, catalog, onClose }: { role?: IdentityRoleDto; catalog: IdentityPermissionDto[]; onClose: () => void }) {
+  const isEdit = !!role;
+  const [name, setName] = useState(role?.name ?? "");
+  const [description, setDescription] = useState(role?.description ?? "");
+  const [selected, setSelected] = useState<string[]>(role?.permissions ?? []);
+  const [error, setError] = useState<string>();
+  const saving = useUnit([createRoleFx.pending, updateRoleFx.pending]).some(Boolean);
+
+  const submit = async () => {
+    if (!name.trim()) {
+      setError("Enter a role name.");
+      return;
+    }
     const params = { name: name.trim(), description: description.trim() || undefined, permissions: selected };
     try {
-      if (editingRole) {
+      if (isEdit) {
         await updateRoleFx(params);
+        notifySuccess("Role updated", `Users holding ${params.name} get the new permissions at their next sign-in.`);
       } else {
         await createRoleFx(params);
+        notifySuccess("Role created", `${params.name} can now be assigned to users.`);
       }
-      closeEditor();
+      onClose();
     } catch (e) {
-      setError(getFieldError(e, "Name") ?? `Failed to ${editingRole ? "update" : "create"} role.`);
+      const fieldError = getFieldError(e, "Name");
+      if (fieldError) setError(fieldError);
+      else notifyError(isEdit ? "Couldn't update the role" : "Couldn't create the role", e);
     }
   };
 
-  // ── Delete confirmation ────────────────────────────────────────────────
-  const [deleteOpened, { open: openDelete, close: closeDelete }] = useDisclosure(false);
-  const [deletingRole, setDeletingRole] = useState<IdentityRoleDto | null>(null);
+  return (
+    <Modal opened onClose={saving ? () => {} : onClose} title={isEdit ? `Edit "${role.name}"` : "New role"} size="lg">
+      <Stack>
+        <TextInput
+          label="Name"
+          description={isEdit ? "Role names can't be changed." : undefined}
+          value={name}
+          onChange={(e) => setName(e.currentTarget.value)}
+          disabled={isEdit}
+          error={error}
+          data-autofocus={!isEdit || undefined}
+        />
+        <TextInput label="Description" value={description} onChange={(e) => setDescription(e.currentTarget.value)} />
+        <Checkbox.Group label="Permissions" value={selected} onChange={setSelected}>
+          <Stack gap="sm" mt="xs">
+            {groupByResource(catalog).map(([resource, permissions]) => (
+              <div key={resource}>
+                <Text size="sm" fw={600} tt="capitalize" mb={4}>
+                  {resource}
+                </Text>
+                <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="xs">
+                  {permissions.map((permission) => (
+                    <Checkbox key={permission.name} value={permission.name} label={permission.name} description={permission.description} />
+                  ))}
+                </SimpleGrid>
+              </div>
+            ))}
+          </Stack>
+        </Checkbox.Group>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={submit} loading={saving}>
+            {isEdit ? "Update" : "Create"}
+          </Button>
+        </Group>
+      </Stack>
+    </Modal>
+  );
+}
 
-  const confirmDelete = (role: IdentityRoleDto) => {
-    setDeletingRole(role);
-    openDelete();
-  };
+function DeleteRoleModal({ role, onClose }: { role: IdentityRoleDto; onClose: () => void }) {
+  const saving = useUnit(deleteRoleFx.pending);
 
-  const deleteConfirmed = async () => {
-    if (!deletingRole?.name) return;
-    await deleteRoleFx(deletingRole.name);
-    closeDelete();
+  const submit = async () => {
+    if (!role.name) return;
+    try {
+      await deleteRoleFx(role.name);
+      notifySuccess("Role deleted", `${role.name} was removed from every user who held it.`);
+      onClose();
+    } catch (e) {
+      notifyError("Couldn't delete the role", e);
+    }
   };
 
   return (
-    <div>
-      <Group justify="space-between" mb="md">
-        <div>
-          <Title order={1}>Roles</Title>
-          <Text>Roles bundle permissions. Users are assigned roles, never permissions directly.</Text>
-        </div>
-        {canWrite && (
-          <Button leftSection={<Plus size={16} />} onClick={() => showEditor(null)}>
-            New role
+    <Modal opened onClose={saving ? () => {} : onClose} title={`Delete "${role.name}"?`}>
+      <Stack>
+        <Text>The role is removed from every user who holds it, and they lose its permissions.</Text>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={onClose} disabled={saving}>
+            Cancel
           </Button>
-        )}
-      </Group>
-
-      {loading && roles.length === 0 ? (
-        <Text aria-busy="true">Loading&hellip;</Text>
-      ) : (
-        <Table>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Name</Table.Th>
-              <Table.Th>Description</Table.Th>
-              <Table.Th>Permissions</Table.Th>
-              {canWrite && <Table.Th />}
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {roles.map((role) => {
-              const isBuiltIn = role.name === ADMINISTRATOR_ROLE;
-              return (
-                <Table.Tr key={role.name}>
-                  <Table.Td>
-                    <Group gap="xs" wrap="nowrap">
-                      <Text fw={500}>{role.name}</Text>
-                      {isBuiltIn && (
-                        <Badge size="xs" variant="outline" color="gray">
-                          Built-in
-                        </Badge>
-                      )}
-                    </Group>
-                  </Table.Td>
-                  <Table.Td>{role.description}</Table.Td>
-                  <Table.Td>
-                    <Group gap={4}>
-                      {(role.permissions ?? []).map((permission) => (
-                        <Badge key={permission} variant="light">
-                          {permission}
-                        </Badge>
-                      ))}
-                    </Group>
-                  </Table.Td>
-                  {canWrite && (
-                    <Table.Td>
-                      {isBuiltIn ? (
-                        <Tooltip label="The Administrator role can't be modified">
-                          <Text size="xs" c="dimmed">
-                            Locked
-                          </Text>
-                        </Tooltip>
-                      ) : (
-                        <Group gap={4} wrap="nowrap">
-                          <ActionIcon variant="subtle" aria-label="Edit role" onClick={() => showEditor(role)}>
-                            <Pencil size={18} strokeWidth={2} />
-                          </ActionIcon>
-                          <ActionIcon
-                            variant="subtle"
-                            color="red"
-                            aria-label="Delete role"
-                            onClick={() => confirmDelete(role)}
-                          >
-                            <Trash2 size={18} strokeWidth={2} />
-                          </ActionIcon>
-                        </Group>
-                      )}
-                    </Table.Td>
-                  )}
-                </Table.Tr>
-              );
-            })}
-          </Table.Tbody>
-        </Table>
-      )}
-
-      {/* Create / edit dialog */}
-      <Modal opened={editorOpened} onClose={closeEditor} title={editingRole ? `Edit "${editingRole.name}"` : "New Role"} size="lg">
-        <Stack>
-          <TextInput
-            label="Name"
-            description={editingRole ? "Role names can't be changed." : undefined}
-            value={name}
-            onChange={(e) => setName(e.currentTarget.value)}
-            disabled={!!editingRole}
-            error={error}
-            autoFocus={!editingRole}
-          />
-          <TextInput label="Description" value={description} onChange={(e) => setDescription(e.currentTarget.value)} />
-          <Checkbox.Group label="Permissions" value={selected} onChange={setSelected}>
-            <Stack gap="sm" mt="xs">
-              {groupByResource(catalog).map(([resource, permissions]) => (
-                <div key={resource}>
-                  <Text size="sm" fw={600} tt="capitalize" mb={4}>
-                    {resource}
-                  </Text>
-                  <SimpleGrid cols={2} spacing="xs">
-                    {permissions.map((permission) => (
-                      <Checkbox
-                        key={permission.name}
-                        value={permission.name}
-                        label={permission.name}
-                        description={permission.description}
-                      />
-                    ))}
-                  </SimpleGrid>
-                </div>
-              ))}
-            </Stack>
-          </Checkbox.Group>
-          <Group justify="flex-end">
-            <Button variant="default" onClick={closeEditor}>
-              Cancel
-            </Button>
-            <Button onClick={commitEditor}>{editingRole ? "Update" : "Create"}</Button>
-          </Group>
-        </Stack>
-      </Modal>
-
-      {/* Delete confirmation */}
-      <Modal opened={deleteOpened} onClose={closeDelete} title={`Delete "${deletingRole?.name}"?`}>
-        <Stack>
-          <Text>The role is removed from every user who holds it, and they lose its permissions.</Text>
-          <Group justify="flex-end">
-            <Button variant="default" onClick={closeDelete}>
-              Cancel
-            </Button>
-            <Button color="red" onClick={deleteConfirmed}>
-              Delete
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-    </div>
+          <Button color="red" onClick={submit} loading={saving}>
+            Delete
+          </Button>
+        </Group>
+      </Stack>
+    </Modal>
   );
 }

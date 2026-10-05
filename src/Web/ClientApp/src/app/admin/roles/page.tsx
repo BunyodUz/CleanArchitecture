@@ -4,7 +4,7 @@ import { RolesView } from "@/views/roles";
 
 export default function Page() {
   return (
-    <AuthGuard requirePermission={PERMISSIONS.roles.read}>
+    <AuthGuard requirePermissions={[PERMISSIONS.roles.read]}>
       <RolesView />
     </AuthGuard>
   );

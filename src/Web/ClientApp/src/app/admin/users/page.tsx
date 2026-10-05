@@ -4,7 +4,7 @@ import { UsersView } from "@/views/users";
 
 export default function Page() {
   return (
-    <AuthGuard requirePermission={PERMISSIONS.users.read}>
+    <AuthGuard requirePermissions={[PERMISSIONS.users.read]}>
       <UsersView />
     </AuthGuard>
   );
