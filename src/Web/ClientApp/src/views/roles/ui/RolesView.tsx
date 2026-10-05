@@ -30,7 +30,7 @@ import {
   updateRoleFx,
 } from "@/entities/role";
 import { $permissions } from "@/entities/session";
-import { ADMINISTRATOR_ROLE, PERMISSIONS } from "@/shared/config/permissions";
+import { PERMISSIONS } from "@/shared/config/permissions";
 import { getFieldError } from "@/shared/lib/api-error";
 import { notifyError, notifySuccess } from "@/shared/lib/notify";
 import { EmptyState } from "@/shared/ui/EmptyState";
@@ -101,16 +101,24 @@ export function RolesView() {
             </Table.Thead>
             <Table.Tbody>
               {roles.map((role) => {
-                const isBuiltIn = role.name === ADMINISTRATOR_ROLE;
+                // Which roles are protected is data in Keycloak (a role attribute), not a name the app knows.
+                const isProtected = !!role.isProtected;
                 return (
                   <Table.Tr key={role.name}>
                     <Table.Td style={{ whiteSpace: "nowrap" }}>
                       <Group gap="xs" wrap="nowrap">
                         <Text fw={500}>{role.name}</Text>
-                        {isBuiltIn && (
-                          // Badges truncate their label by default; this one must always read in full.
-                          <Badge size="sm" variant="outline" color="gray" style={{ flexShrink: 0, overflow: "visible" }}>
-                            Built-in
+                        {isProtected && (
+                          // Badges truncate their label (overflow: hidden), which also lets the table size this
+                          // column narrower than the label; keep the label's full width.
+                          <Badge
+                            size="sm"
+                            variant="outline"
+                            color="gray"
+                            style={{ flexShrink: 0 }}
+                            styles={{ label: { overflow: "visible", textOverflow: "clip" } }}
+                          >
+                            Protected
                           </Badge>
                         )}
                       </Group>
@@ -128,8 +136,8 @@ export function RolesView() {
                     {canWrite && (
                       <Table.Td>
                         <Group gap={2} justify="flex-end" wrap="nowrap">
-                          {isBuiltIn ? (
-                            <Tooltip label="The Administrator role can't be modified">
+                          {isProtected ? (
+                            <Tooltip label="Protected roles can't be modified or deleted">
                               <ActionIcon variant="subtle" color="gray" aria-label="Locked role" data-disabled>
                                 <Lock size={18} />
                               </ActionIcon>

@@ -9,7 +9,7 @@ import { $auditEntries, $auditLoading, describeAuditAction, fetchAuditLogFx } fr
 import { $roles, $rolesLoading, fetchRolesFx } from "@/entities/role";
 import { $permissions } from "@/entities/session";
 import { $users, $usersLoading, fetchUsersFx } from "@/entities/user";
-import { ADMINISTRATOR_ROLE, PERMISSIONS } from "@/shared/config/permissions";
+import { PERMISSIONS } from "@/shared/config/permissions";
 import { formatDateTime, formatRelativeTime } from "@/shared/lib/time";
 import { PageHeader } from "@/shared/ui/PageHeader";
 
@@ -92,6 +92,7 @@ export function AdminOverviewView() {
   const canReadUsers = permissions.includes(PERMISSIONS.users.read);
   const canReadRoles = permissions.includes(PERMISSIONS.roles.read);
   const canReadAudit = permissions.includes(PERMISSIONS.audit.read);
+  const protectedRoles = new Set(roles.filter((r) => r.isProtected).map((r) => r.name));
 
   useEffect(() => {
     if (canReadUsers) fetchUsersFx().catch(() => undefined);
@@ -111,12 +112,14 @@ export function AdminOverviewView() {
           <>
             <Stat label="Users" value={users.length} href="/admin/users" loading={usersLoading && users.length === 0} />
             <Stat label="Disabled" value={users.filter((u) => !u.enabled).length} href="/admin/users" loading={usersLoading && users.length === 0} />
-            <Stat
-              label="Administrators"
-              value={users.filter((u) => u.roles?.includes(ADMINISTRATOR_ROLE)).length}
-              href="/admin/users"
-              loading={usersLoading && users.length === 0}
-            />
+            {canReadRoles && (
+              <Stat
+                label="With a protected role"
+                value={users.filter((u) => u.roles?.some((r) => protectedRoles.has(r))).length}
+                href="/admin/users"
+                loading={(usersLoading && users.length === 0) || (rolesLoading && roles.length === 0)}
+              />
+            )}
           </>
         )}
         {canReadRoles && <Stat label="Roles" value={roles.length} href="/admin/roles" loading={rolesLoading && roles.length === 0} />}

@@ -38,6 +38,16 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand>
 
         Guard.Against.NotFound(request.Id, before);
 
+        if (before.Enabled && !request.Enabled)
+        {
+            var protectedRoles = await ProtectedRoleGuard.GetProtectedRoleNamesAsync(_identityAdminService, cancellationToken);
+            if (ProtectedRoleGuard.CountsAsAdministrator(before, protectedRoles))
+            {
+                await ProtectedRoleGuard.EnsureAnotherAdministratorAsync(
+                    _identityAdminService, protectedRoles, request.Id, nameof(request.Enabled), cancellationToken);
+            }
+        }
+
         await _identityAdminService.UpdateUserAsync(
             request.Id,
             request.Username,

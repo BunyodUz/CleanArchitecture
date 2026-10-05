@@ -32,6 +32,17 @@ public class SetUserRolesCommandHandler : IRequestHandler<SetUserRolesCommand>
 
         Guard.Against.NotFound(request.Id, before);
 
+        // Only removing roles can take away administrator access.
+        if (before.Roles.Except(request.Roles, StringComparer.Ordinal).Any())
+        {
+            var protectedRoles = await ProtectedRoleGuard.GetProtectedRoleNamesAsync(_identityAdminService, cancellationToken);
+            if (ProtectedRoleGuard.CountsAsAdministrator(before, protectedRoles) && !request.Roles.Any(protectedRoles.Contains))
+            {
+                await ProtectedRoleGuard.EnsureAnotherAdministratorAsync(
+                    _identityAdminService, protectedRoles, request.Id, nameof(request.Roles), cancellationToken);
+            }
+        }
+
         await _identityAdminService.SetUserRolesAsync(request.Id, request.Roles, cancellationToken);
 
         // Saving the user dialog always sends the role list; only record an actual change.

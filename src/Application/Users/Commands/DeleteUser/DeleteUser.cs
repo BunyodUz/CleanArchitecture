@@ -25,6 +25,16 @@ public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand>
 
         Guard.Against.NotFound(request.Id, user);
 
+        if (user.Enabled && user.Roles.Count > 0)
+        {
+            var protectedRoles = await ProtectedRoleGuard.GetProtectedRoleNamesAsync(_identityAdminService, cancellationToken);
+            if (ProtectedRoleGuard.CountsAsAdministrator(user, protectedRoles))
+            {
+                await ProtectedRoleGuard.EnsureAnotherAdministratorAsync(
+                    _identityAdminService, protectedRoles, request.Id, nameof(request.Id), cancellationToken);
+            }
+        }
+
         await _identityAdminService.DeleteUserAsync(request.Id, cancellationToken);
 
         await _auditLog.RecordAsync(AuditActions.UserDeleted, AuditTargets.User, request.Id, user.Username, null, cancellationToken);

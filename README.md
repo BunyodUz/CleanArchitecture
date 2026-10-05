@@ -73,6 +73,12 @@ The Aspire dashboard will open automatically, showing the application URLs and l
 
 These are local-dev-only accounts defined in the realm export — change or remove them for anything beyond local development.
 
+The realm's roles are a starting point, not something the code depends on. The app checks permissions, never role names:
+
+* `Administrator` is the starting role. It holds every permission and is marked **protected** with the role attribute `protected = true`. Protected roles can't be edited or deleted, and the app refuses any change that would leave no enabled user holding one ([ADR-009](docs/decisions/ADR-009-Protected-Roles-As-Keycloak-Data.md)). Rename it, or protect other roles, in `realm-export.json`.
+* `Member` and both dev users are samples for the todo feature. Replace them with your own roles and users.
+* To give new self-registered users permissions by default, add them to Keycloak's `default-roles-cleanarchitecture` role. No code change is needed.
+
 Authorization is role-based (see [ADR-007](docs/decisions/ADR-007-Role-Based-Access-Control-With-Composite-Roles.md)): users are assigned **roles**, roles bundle **permissions**, and every check in the app is a permission check. Signed in as `administrator`, the account menu (top right) has an **Admin** entry that switches to the admin layout (`/admin`), whose sidebar has **Users** and **Roles** pages for managing users, their role assignments, and which permissions each role grants — all stored in Keycloak and managed through its Admin REST API ([ADR-006](docs/decisions/ADR-006-Keycloak-Admin-API-User-Management.md)). Every such change is recorded with the administrator who made it in the app's **Audit log** ([ADR-008](docs/decisions/ADR-008-App-Side-Audit-Log-For-Admin-Changes.md)). Press <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>⌘</kbd>+<kbd>K</kbd> on a Mac) anywhere to jump to a page or, as an administrator, to a user.
 
 > Keycloak only imports `deploy/keycloak/realm-export.json` when the realm doesn't exist yet. If you ran the app before these roles were added, delete the Keycloak data volume and restart the AppHost to re-import it.

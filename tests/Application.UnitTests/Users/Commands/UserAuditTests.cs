@@ -32,6 +32,10 @@ public class UserAuditTests
     {
         _identityAdminService = new Mock<IIdentityAdminService>();
         _identityAdminService.Setup(s => s.GetUserAsync("u1", It.IsAny<CancellationToken>())).ReturnsAsync(Existing);
+        // No protected roles in play here; LastAdministratorGuardTests covers that.
+        _identityAdminService
+            .Setup(s => s.GetRolesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([new IdentityRoleDto { Id = "r1", Name = "Member" }]);
         _auditLog = new Mock<IAuditLog>();
     }
 

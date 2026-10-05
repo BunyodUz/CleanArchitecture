@@ -48,6 +48,9 @@ public interface IIdentityAdminService
     /// <returns>The role, or <see langword="null"/> if no role with that name exists.</returns>
     Task<IdentityRoleDto?> GetRoleAsync(string name, CancellationToken cancellationToken);
 
+    /// <summary>Every user directly assigned the role.</summary>
+    Task<IReadOnlyList<IdentityRoleMemberDto>> GetRoleMembersAsync(string roleName, CancellationToken cancellationToken);
+
     /// <summary>The catalog of permissions that can be granted to a role.</summary>
     Task<IReadOnlyList<IdentityPermissionDto>> GetPermissionsAsync(CancellationToken cancellationToken);
 

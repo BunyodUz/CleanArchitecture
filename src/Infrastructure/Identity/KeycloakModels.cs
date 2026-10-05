@@ -54,6 +54,11 @@ internal sealed class RoleRepresentation
 
     [JsonPropertyName("description")]
     public string? Description { get; set; }
+
+    /// <summary>Free-form role attributes; only returned when a request asks for the full representation.</summary>
+    [JsonPropertyName("attributes")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, List<string>>? Attributes { get; set; }
 }
 
 /// <summary>Keycloak Admin REST API's ClientRepresentation — only used to resolve a clientId to its internal UUID.</summary>

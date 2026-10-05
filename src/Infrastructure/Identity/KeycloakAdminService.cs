@@ -23,6 +23,9 @@ public class KeycloakAdminService : IIdentityAdminService
     // every role listing and left untouched when a user's roles are replaced.
     private const string DefaultRolesPrefix = "default-roles-";
 
+    /// <summary>Realm-role attribute marking a role as protected (see <see cref="IdentityRoleDto.IsProtected"/>).</summary>
+    private const string ProtectedAttribute = "protected";
+
     private readonly HttpClient _httpClient;
     private readonly string _realm;
     private readonly string _permissionsClientId;
@@ -183,6 +186,23 @@ public class KeycloakAdminService : IIdentityAdminService
         return await ToRoleDtoAsync(role, clientUuid, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<IdentityRoleMemberDto>> GetRoleMembersAsync(string roleName, CancellationToken cancellationToken)
+    {
+        const int pageSize = 100;
+        var members = new List<IdentityRoleMemberDto>();
+
+        // Keycloak caps each response, so page until a short page comes back.
+        for (var first = 0; ; first += pageSize)
+        {
+            var page = await _httpClient.GetFromJsonAsync<List<UserRepresentation>>(
+                $"{RolePath(roleName)}/users?first={first}&max={pageSize}&briefRepresentation=true", cancellationToken) ?? [];
+
+            members.AddRange(page.Select(u => new IdentityRoleMemberDto(u.Id ?? string.Empty, u.Username, u.Enabled)));
+
+            if (page.Count < pageSize) return members;
+        }
+    }
+
     public async Task<IReadOnlyList<IdentityPermissionDto>> GetPermissionsAsync(CancellationToken cancellationToken)
     {
         var clientUuid = await GetPermissionsClientUuidAsync(cancellationToken);
@@ -207,9 +227,14 @@ public class KeycloakAdminService : IIdentityAdminService
     public async Task UpdateRoleAsync(string name, string? description, IReadOnlyList<string> permissions, CancellationToken cancellationToken)
     {
         // Keycloak's role update only touches name/description/attributes — composites are
-        // managed separately below.
+        // managed separately below. The current attributes are sent back unchanged so an update
+        // can never drop one (such as "protected").
+        var current = await _httpClient.GetFromJsonAsync<RoleRepresentation>(RolePath(name), cancellationToken);
+
         var response = await _httpClient.PutAsJsonAsync(
-            RolePath(name), new RoleRepresentation { Name = name, Description = description }, cancellationToken);
+            RolePath(name),
+            new RoleRepresentation { Name = name, Description = description, Attributes = current?.Attributes },
+            cancellationToken);
         response.EnsureSuccessStatusCode();
 
         await SetRolePermissionsAsync(name, permissions, cancellationToken);
@@ -224,6 +249,10 @@ public class KeycloakAdminService : IIdentityAdminService
     // ── Helpers ──────────────────────────────────────────────────────────
 
     private string RolePath(string name) => $"admin/realms/{_realm}/roles/{Uri.EscapeDataString(name)}";
+
+    private static bool IsProtected(RoleRepresentation role) =>
+        role.Attributes?.TryGetValue(ProtectedAttribute, out var values) == true
+        && values.Any(v => string.Equals(v, "true", StringComparison.OrdinalIgnoreCase));
 
     private static bool IsAssignable(RoleRepresentation role) =>
         role.Name is not null && !role.Name.StartsWith(DefaultRolesPrefix, StringComparison.OrdinalIgnoreCase);
@@ -293,6 +322,7 @@ public class KeycloakAdminService : IIdentityAdminService
             Id = role.Id ?? string.Empty,
             Name = role.Name!,
             Description = role.Description,
+            IsProtected = IsProtected(role),
             Permissions = permissions.Where(p => p.Name is not null).Select(p => p.Name!).OrderBy(p => p, StringComparer.Ordinal).ToList(),
         };
     }
@@ -309,7 +339,7 @@ public class KeycloakAdminService : IIdentityAdminService
     private async Task<List<RoleRepresentation>> GetAssignableRealmRolesAsync(CancellationToken cancellationToken)
     {
         var roles = await _httpClient.GetFromJsonAsync<List<RoleRepresentation>>(
-            $"admin/realms/{_realm}/roles", cancellationToken) ?? [];
+            $"admin/realms/{_realm}/roles?briefRepresentation=false", cancellationToken) ?? [];
 
         return roles.Where(IsAssignable).ToList();
     }

@@ -8,8 +8,9 @@
     "realm": [
       {
         "name": "Administrator",
-        "description": "Whole-app administrator",
+        "description": "Starting role with every permission. Protected: it can't be edited or deleted, and the last enabled user holding it can't lose it. Rename it freely.",
         "composite": true,
+        "attributes": { "protected": ["true"] },
         "composites": {
           "client": {
             "cleanarchitecture-web": [
@@ -21,7 +22,7 @@
       },
       {
         "name": "Member",
-        "description": "Standard user",
+        "description": "Sample role for the template's todo feature. Replace it with your own roles.",
         "composite": true,
         "composites": {
           "client": {

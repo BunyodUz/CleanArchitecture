@@ -12,6 +12,7 @@ An ADR captures a significant architectural decision: the context that led to it
 | [ADR-004](ADR-004-SQL-Script-Migrations-With-DbUp.md) | Numbered SQL Script Migrations with DbUp | 2026-09-15 | Accepted |
 | [ADR-005](ADR-005-Keycloak-Authentication-And-Permission-Based-Authorization.md) | Keycloak Authentication and Permission-Based Authorization | 2026-09-15 | Accepted |
 | [ADR-006](ADR-006-Keycloak-Admin-API-User-Management.md) | User Management via Keycloak's Admin REST API | 2026-09-16 | Accepted (gating amended by ADR-007) |
-| [ADR-007](ADR-007-Role-Based-Access-Control-With-Composite-Roles.md) | Role-Based Access Control with Keycloak Composite Roles | 2026-10-05 | Accepted |
+| [ADR-007](ADR-007-Role-Based-Access-Control-With-Composite-Roles.md) | Role-Based Access Control with Keycloak Composite Roles | 2026-10-05 | Accepted (lockout guard amended by ADR-009) |
 | [ADR-008](ADR-008-App-Side-Audit-Log-For-Admin-Changes.md) | App-Side Audit Log for Administrative Changes | 2026-10-05 | Accepted |
+| [ADR-009](ADR-009-Protected-Roles-As-Keycloak-Data.md) | Protected Roles as Keycloak Data, with a Last-Administrator Guard | 2026-10-05 | Accepted |
 

@@ -1,4 +1,5 @@
 using CleanArchitecture.Application.Common.Interfaces;
+using CleanArchitecture.Application.Common.Security;
 
 namespace CleanArchitecture.Application.Roles.Commands.UpdateRole;
 
@@ -12,10 +13,10 @@ public class UpdateRoleCommandValidator : AbstractValidator<UpdateRoleCommand>
 
         RuleFor(v => v.Name)
             .NotEmpty()
-            // Administrator holds roles.write; letting it be edited would let the last admin
-            // strip their own ability to fix it.
-            .Must(name => !string.Equals(name, Domain.Constants.Roles.Administrator, StringComparison.OrdinalIgnoreCase))
-                .WithMessage("The Administrator role is built in and can't be modified.")
+            // A protected role is how administrators keep roles.write; letting it be edited would
+            // let the last admin strip their own ability to fix it.
+            .MustAsync((name, cancellationToken) => ProtectedRoleGuard.NotBeProtectedAsync(_identityAdminService, name, cancellationToken))
+                .WithMessage("'{PropertyValue}' is a protected role and can't be modified.")
                 .WithErrorCode("Protected");
 
         RuleFor(v => v.Description).MaximumLength(255);

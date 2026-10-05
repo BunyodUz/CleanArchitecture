@@ -42,10 +42,9 @@ public static class TestApp
         ["Member"],
         [Permissions.TodoLists.Read, Permissions.TodoLists.Write, Permissions.TodoItems.Read, Permissions.TodoItems.Write]);
 
-    // Qualified: inside CleanArchitecture.Application.*, a bare "Roles" binds to the
-    // CleanArchitecture.Application.Roles feature namespace instead of the constants class.
+    // Role names are only labels here: the app checks permissions, never role names.
     public static Task<string> RunAsAdministratorAsync() => RunAsUserAsync(
-        [Domain.Constants.Roles.Administrator],
+        ["Administrator"],
         [
             Permissions.TodoLists.Read, Permissions.TodoLists.Write, Permissions.TodoItems.Read, Permissions.TodoItems.Write,
             Permissions.Users.Read, Permissions.Users.Write, Permissions.Roles.Read, Permissions.Roles.Write, Permissions.Audit.Read,

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted. The lockout guard is amended by [ADR-009](ADR-009-Protected-Roles-As-Keycloak-Data.md): protected roles are now marked in Keycloak instead of by name.
 
 ## Date
 

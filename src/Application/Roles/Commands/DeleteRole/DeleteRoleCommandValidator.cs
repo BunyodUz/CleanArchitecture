@@ -1,13 +1,16 @@
+using CleanArchitecture.Application.Common.Interfaces;
+using CleanArchitecture.Application.Common.Security;
+
 namespace CleanArchitecture.Application.Roles.Commands.DeleteRole;
 
 public class DeleteRoleCommandValidator : AbstractValidator<DeleteRoleCommand>
 {
-    public DeleteRoleCommandValidator()
+    public DeleteRoleCommandValidator(IIdentityAdminService identityAdminService)
     {
         RuleFor(v => v.Name)
             .NotEmpty()
-            .Must(name => !string.Equals(name, Domain.Constants.Roles.Administrator, StringComparison.OrdinalIgnoreCase))
-                .WithMessage("The Administrator role is built in and can't be deleted.")
+            .MustAsync((name, cancellationToken) => ProtectedRoleGuard.NotBeProtectedAsync(identityAdminService, name, cancellationToken))
+                .WithMessage("'{PropertyValue}' is a protected role and can't be deleted.")
                 .WithErrorCode("Protected");
     }
 }

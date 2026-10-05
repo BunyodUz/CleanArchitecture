@@ -20,5 +20,3 @@ export const PERMISSION_DESCRIPTIONS: Record<string, string> = {
   "roles.write": "Create and edit roles, assign roles to users",
   "audit.read": "See the audit log of changes to users and roles",
 };
-
-export const ADMINISTRATOR_ROLE = "Administrator";
